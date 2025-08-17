@@ -11,9 +11,9 @@ class Player {
         this.vx = 0;
         this.vy = 0;
         this.angle = 0;
-        this.speed = 400;
-        this.turnSpeed = 5;
-        this.friction = 0.95;
+        this.speed = 350; // Was 400
+        this.turnSpeed = 3; // Was 5
+        this.friction = 0.92; // Was 0.95
         this.dashCooldown = 0;
         this.dashDuration = 0;
         this.health = 100;
@@ -103,4 +103,3 @@ class Player {
 }
 
 export default Player;
-
