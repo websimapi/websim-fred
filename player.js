@@ -13,13 +13,15 @@ class Player {
         this.vx = 0;
         this.vy = 0;
         this.angle = 0;
-        this.speed = 400;
-        this.turnSpeed = 5;
-        this.friction = 0.95;
+        this.speed = 350; // Adjusted for new movement logic
+        this.turnSpeed = 5; // Will be used for interpolation
         this.dashCooldown = 0;
         this.dashDuration = 0;
         this.health = 100;
         this.pearls = 0;
+
+        // For swim animation
+        this.swimCycle = 0;
     }
 
     update(input, deltaTime) {
@@ -27,7 +29,7 @@ class Player {
         if (this.dashCooldown > 0) this.dashCooldown -= deltaTime;
         if (this.dashDuration > 0) this.dashDuration -= deltaTime;
 
-        // Set target on click
+        // Set target on click/touch
         if (input.mouse.clicked) {
             this.targetX = input.mouse.x + this.game.camera.x;
             this.targetY = input.mouse.y + this.game.camera.y;
@@ -43,43 +45,47 @@ class Player {
 
         const currentSpeed = this.dashDuration > 0 ? this.speed * 3 : this.speed;
 
-        // Movement based on target
+        // --- New Movement Logic ---
         let dx = this.targetX - this.x;
         let dy = this.targetY - this.y;
         let distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance > 1) { // Only move if not at the target
-            let targetAngle = Math.atan2(dy, dx);
 
-            // Smooth turning
-            let angleDiff = targetAngle - this.angle;
-            while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
-            while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+        let desiredVx = 0;
+        let desiredVy = 0;
 
-            this.angle += angleDiff * this.turnSpeed * deltaTime;
-            
-            if (distance > this.width / 4) {
-                this.vx += Math.cos(this.angle) * currentSpeed * deltaTime;
-                this.vy += Math.sin(this.angle) * currentSpeed * deltaTime;
-            }
+        if (distance > 5) { // Stop if very close to the target
+            desiredVx = (dx / distance) * currentSpeed;
+            desiredVy = (dy / distance) * currentSpeed;
         }
 
-        // Apply friction
-        this.vx *= this.friction;
-        this.vy *= this.friction;
-
+        // Smoothly interpolate velocity towards the desired velocity
+        const lerpFactor = this.turnSpeed * deltaTime;
+        this.vx += (desiredVx - this.vx) * lerpFactor;
+        this.vy += (desiredVy - this.vy) * lerpFactor;
+        
         // Update position
-        this.x += this.vx;
-        this.y += this.vy;
+        this.x += this.vx * deltaTime;
+        this.y += this.vy * deltaTime;
+
+        // Update angle to match velocity
+        if (Math.abs(this.vx) > 0.1 || Math.abs(this.vy) > 0.1) {
+            this.angle = Math.atan2(this.vy, this.vx);
+        }
+
+        // Update swim animation cycle based on speed
+        const currentVelocity = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+        this.swimCycle += (currentVelocity / 100) * deltaTime;
         
         // Boundaries
         const worldBounds = this.game.world.bounds;
         this.x = Math.max(this.width/2, Math.min(this.x, worldBounds.width - this.width/2));
         this.y = Math.max(this.height/2, Math.min(this.y, worldBounds.height - this.height/2));
 
-        // Emit bubble particles
-        if (Math.random() > 0.8) {
-             this.game.particleSystem.createParticle(this.x - Math.cos(this.angle)*20, this.y - Math.sin(this.angle)*20, 'bubble', 0.2);
+        // Emit bubble particles when moving
+        if (currentVelocity > 20 && Math.random() > 0.5) {
+             const backX = this.x - Math.cos(this.angle) * this.width/2;
+             const backY = this.y - Math.sin(this.angle) * this.width/2;
+             this.game.particleSystem.createParticle(backX, backY, 'bubble', 0.2, 0.5);
         }
     }
 
@@ -87,11 +93,17 @@ class Player {
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.rotate(this.angle);
+
+        // --- Swim Animation ---
+        const swimBend = Math.sin(this.swimCycle * 20) * 0.1; // Amount of bend
         
-        // Flip image if moving left
-        if(Math.cos(this.angle) < 0) {
+        // Flip image if moving left (based on velocity, not angle)
+        if(this.vx < 0) {
             ctx.scale(1, -1);
         }
+        
+        // Apply the bend
+        ctx.scale(1 + swimBend, 1 - swimBend);
 
         ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
         ctx.restore();
