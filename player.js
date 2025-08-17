@@ -8,12 +8,14 @@ class Player {
         this.height = 50;
         this.x = x;
         this.y = y;
+        this.targetX = x;
+        this.targetY = y;
         this.vx = 0;
         this.vy = 0;
         this.angle = 0;
-        this.speed = 350; // Was 400
-        this.turnSpeed = 3; // Was 5
-        this.friction = 0.92; // Was 0.95
+        this.speed = 400;
+        this.turnSpeed = 5;
+        this.friction = 0.95;
         this.dashCooldown = 0;
         this.dashDuration = 0;
         this.health = 100;
@@ -25,8 +27,14 @@ class Player {
         if (this.dashCooldown > 0) this.dashCooldown -= deltaTime;
         if (this.dashDuration > 0) this.dashDuration -= deltaTime;
 
+        // Set target on click
+        if (input.mouse.clicked) {
+            this.targetX = input.mouse.x + this.game.camera.x;
+            this.targetY = input.mouse.y + this.game.camera.y;
+        }
+
         // Dash logic
-        if ((input.keys.includes(' ') || input.mouse.down) && this.dashCooldown <= 0) {
+        if (input.keys.includes(' ') && this.dashCooldown <= 0) {
             this.dashDuration = 0.15;
             this.dashCooldown = 1.0;
             this.game.playSound('dash');
@@ -36,24 +44,24 @@ class Player {
         const currentSpeed = this.dashDuration > 0 ? this.speed * 3 : this.speed;
 
         // Movement based on target
-        let targetX = input.mouse.x + this.game.camera.x;
-        let targetY = input.mouse.y + this.game.camera.y;
-
-        let dx = targetX - this.x;
-        let dy = targetY - this.y;
+        let dx = this.targetX - this.x;
+        let dy = this.targetY - this.y;
         let distance = Math.sqrt(dx * dx + dy * dy);
-        let targetAngle = Math.atan2(dy, dx);
-
-        // Smooth turning
-        let angleDiff = targetAngle - this.angle;
-        while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
-        while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-
-        this.angle += angleDiff * this.turnSpeed * deltaTime;
         
-        if (distance > this.width / 4) {
-            this.vx += Math.cos(this.angle) * currentSpeed * deltaTime;
-            this.vy += Math.sin(this.angle) * currentSpeed * deltaTime;
+        if (distance > 1) { // Only move if not at the target
+            let targetAngle = Math.atan2(dy, dx);
+
+            // Smooth turning
+            let angleDiff = targetAngle - this.angle;
+            while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+            while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+
+            this.angle += angleDiff * this.turnSpeed * deltaTime;
+            
+            if (distance > this.width / 4) {
+                this.vx += Math.cos(this.angle) * currentSpeed * deltaTime;
+                this.vy += Math.sin(this.angle) * currentSpeed * deltaTime;
+            }
         }
 
         // Apply friction

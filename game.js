@@ -118,6 +118,9 @@ class Game {
         this.update(deltaTime);
         this.draw();
 
+        // Reset click state after update and draw
+        this.input.reset();
+
         requestAnimationFrame(this.gameLoop.bind(this));
     }
 
@@ -147,4 +150,3 @@ class Game {
 }
 
 export default Game;
-
