@@ -97,11 +97,6 @@ class Player {
         // --- Swim Animation ---
         const swimBend = Math.sin(this.swimCycle * 20) * 0.1; // Amount of bend
         
-        // Flip image if moving left (based on velocity, not angle)
-        if(this.vx < 0) {
-            ctx.scale(1, -1);
-        }
-        
         // Apply the bend
         ctx.scale(1 + swimBend, 1 - swimBend);
 
