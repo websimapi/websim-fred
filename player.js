@@ -93,19 +93,21 @@ class Player {
         ctx.save();
         ctx.translate(this.x, this.y);
 
-        // Determine flip based on horizontal velocity
+        // Determine flip based on horizontal velocity. The base image faces right.
         const isFlipped = this.vx < 0;
         if (isFlipped) {
             ctx.scale(-1, 1);
         }
 
-        // Rotate. If flipped, the angle needs to be inverted.
-        ctx.rotate(isFlipped ? -this.angle : this.angle);
+        // Rotate to match the angle of movement.
+        // The angle is calculated from velocity, so it's always correct relative to the world.
+        // The scale(-1, 1) will correctly mirror the rotation.
+        ctx.rotate(this.angle);
 
         // --- Swim Animation ---
         const swimBend = Math.sin(this.swimCycle * 20) * 0.1; // Amount of bend
         
-        // Apply the bend
+        // Apply the bend. This should be applied after rotation and flip.
         ctx.scale(1 + swimBend, 1 - swimBend);
 
         ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
