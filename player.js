@@ -92,7 +92,15 @@ class Player {
     draw(ctx) {
         ctx.save();
         ctx.translate(this.x, this.y);
-        ctx.rotate(this.angle);
+
+        // Determine flip based on horizontal velocity
+        const isFlipped = this.vx < 0;
+        if (isFlipped) {
+            ctx.scale(-1, 1);
+        }
+
+        // Rotate. If flipped, the angle needs to be inverted.
+        ctx.rotate(isFlipped ? -this.angle : this.angle);
 
         // --- Swim Animation ---
         const swimBend = Math.sin(this.swimCycle * 20) * 0.1; // Amount of bend
