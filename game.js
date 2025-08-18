@@ -182,6 +182,9 @@ class Game {
         this.ctx.save();
         this.ctx.translate(-this.camera.x, -this.camera.y);
 
+        // draw front sand before world so NPCs render on top
+        if (this.sand) this.sand.draw(this.ctx);
+        
         this.world.draw(this.ctx, this.camera);
         this.particleSystem.draw(this.ctx);
         this.player.draw(this.ctx);
@@ -189,8 +192,6 @@ class Game {
         this.ctx.restore();
 
         this.world.drawForeground(this.ctx, this.camera);
-        if (this.sand) this.sand.draw(this.ctx);
-        this.ui.draw(this.ctx);
     }
 }
 

@@ -261,28 +261,14 @@ class World {
                 collected: false
             });
         };
-        // 2 front-sand pearls: slightly below the front surface so they're buried
-        for (let i = 0; i < 2; i++) {
+        // 4 front-sand pearls: slightly below the front surface so they're buried
+        for (let i = 0; i < 4; i++) {
             let tries = 0, placed = false;
             while (!placed && tries++ < 50) {
                 const x = Math.random() * this.bounds.width;
                 const surf = sand.getFrontSurfaceY(x);
                 if (isFinite(surf) && surf < this.bounds.height - 5) {
                     addPearl(x, surf + 12, 'front_sand');
-                    placed = true;
-                }
-            }
-        }
-        // 2 back-sand pearls: place slightly above back surface, then auto-cover with back sand
-        for (let i = 0; i < 2; i++) {
-            let tries = 0, placed = false;
-            while (!placed && tries++ < 50) {
-                const x = Math.random() * this.bounds.width;
-                const surf = sand.getBackSurfaceY(x);
-                if (isFinite(surf)) {
-                    const y = surf - 10; // above the mountain line
-                    addPearl(x, y, 'back_sand');
-                    sand.coverBackAt(x, y, 22); // auto-cover so it's hidden until uncovered
                     placed = true;
                 }
             }

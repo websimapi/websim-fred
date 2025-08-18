@@ -41,12 +41,10 @@ export class NPC {
 export class Crab extends NPC {
     constructor(x, y, game) {
         super(x, y, game, game.assets.crab, 100, 70);
-        this.noSand = true;
-        this.quest = {
-            id: 'pearl_collector',
-            pearls_needed: 5,
-            complete: false
-        };
+        this.speed = 40;
+        this.dir = 1;
+        this.patrolRange = 220;
+        this.originX = x;
     }
     
     getDialogue(player) {
@@ -62,5 +60,26 @@ export class Crab extends NPC {
         } else {
             return `Welcome! I'm trying to collect shiny things. Could you bring me ${this.quest.pearls_needed} pearls? You have ${player.pearls}.`;
         }
+    }
+
+    update(deltaTime, player) {
+        // simple patrol
+        this.x += this.dir * this.speed * deltaTime;
+        if (this.x > this.originX + this.patrolRange) this.dir = -1;
+        if (this.x < this.originX - this.patrolRange) this.dir = 1;
+
+        // stand on front sand surface
+        const sand = this.game.sand;
+        if (sand) {
+            const surf = sand.getFrontSurfaceY(this.x);
+            this.y = surf - this.height / 2 - 2;
+
+            // apply gentle transfer-only impulse to shift sand as he walks
+            const speed = Math.abs(this.dir * this.speed) + 50; // ensure > lowSpeed threshold
+            sand.impulseAt(this.x, surf - 4, 18, this.dir, this.y, speed);
+        }
+
+        // keep existing interaction logic (dialogue, UI activation)
+        super.update(deltaTime, player);
     }
 }
