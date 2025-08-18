@@ -261,6 +261,19 @@ class World {
                 collected: false
             });
         };
+        const collidesWithHazardsOrNPCs = (x, y, radius = 60) => {
+            for (const h of this.hazards) {
+                const dx = x - h.x, dy = y - h.y;
+                const r = radius + Math.max(h.width, h.height) * 0.5;
+                if (dx * dx + dy * dy < r * r) return true;
+            }
+            for (const n of this.npcs) {
+                const dx = x - n.x, dy = y - n.y;
+                const r = radius + Math.max(n.width, n.height) * 0.5;
+                if (dx * dx + dy * dy < r * r) return true;
+            }
+            return false;
+        };
         // 2 front-sand pearls: slightly below the front surface so they're buried
         for (let i = 0; i < 2; i++) {
             let tries = 0, placed = false;
@@ -285,7 +298,10 @@ class World {
                 const lineY = top + (sand.backdropRows - minFill) * sand.cell;
                 const bury = 12;
                 const yCandidate = Math.min(surf + bury, lineY - 4);
-                if (isFinite(surf) && yCandidate > surf + 6) {
+                const topPortionMaxY = top + sand.backdropRows * sand.cell * 0.6;
+                const behindSand = sand.isBackFilledAt(x, yCandidate, 12);
+                const safe = !collidesWithHazardsOrNPCs(x, yCandidate, 60);
+                if (isFinite(surf) && yCandidate > surf + 6 && yCandidate <= topPortionMaxY && behindSand && safe) {
                     addPearl(x, yCandidate, 'back_sand');
                     placed = true;
                 }
