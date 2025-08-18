@@ -134,7 +134,7 @@ class World {
     drawBackground(ctx, camera) {
         // Solid background layers
         const bgFar = this.game.assets.backgroundFar;
-        const bgMid = this.game.assets.backgroundMid;
+        // const bgMid = this.game.assets.backgroundMid;
 
         const parallaxFactorFar = 0.1;
         const parallaxFactorMid = 0.3;
@@ -151,9 +151,9 @@ class World {
         });
         ctx.restore();
         
-        ctx.globalAlpha = 0.5;
-        this.drawBackgroundLayer(ctx, bgMid, camera.x * parallaxFactorMid, camera.y * parallaxFactorMid);
-        ctx.globalAlpha = 1;
+        // ctx.globalAlpha = 0.5;
+        // this.drawBackgroundLayer(ctx, bgMid, camera.x * parallaxFactorMid, camera.y * parallaxFactorMid);
+        // ctx.globalAlpha = 1;
         
         // Draw mid background entities
         ctx.save();
@@ -166,13 +166,13 @@ class World {
     }
 
     drawForeground(ctx, camera) {
-        const bgNear = this.game.assets.backgroundNear;
+        // const bgNear = this.game.assets.backgroundNear;
         const parallaxFactorNear = 0.6;
 
         // Draw near background (foreground)
-        ctx.globalAlpha = 0.3;
-        this.drawBackgroundLayer(ctx, bgNear, camera.x * parallaxFactorNear, camera.y * parallaxFactorNear);
-        ctx.globalAlpha = 1;
+        // ctx.globalAlpha = 0.3;
+        // this.drawBackgroundLayer(ctx, bgNear, camera.x * parallaxFactorNear, camera.y * parallaxFactorNear);
+        // ctx.globalAlpha = 1;
 
         // Draw near background entities
         ctx.save();
