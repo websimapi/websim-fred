@@ -64,7 +64,7 @@ class Game {
                             this.assets[assetInfo.name] = canvas;
                         } else {
                             if (assetInfo.chromaKeyBlue) {
-                                const src = this.assets[assetInfo.name];
+                                const src = img;
                                 const c = document.createElement('canvas'); c.width = src.width; c.height = src.height;
                                 const cx = c.getContext('2d'); cx.drawImage(src, 0, 0);
                                 const imgd = cx.getImageData(0, 0, c.width, c.height), d = imgd.data;
