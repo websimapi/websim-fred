@@ -3,8 +3,7 @@ import { ParticleSystem } from 'particles';
 class Player {
     constructor(x, y, game) {
         this.game = game;
-           // 🔥 One-liner flip
-        this.image = (()=>{let c=document.createElement("canvas"),x=c.getContext("2d");c.width=game.assets.freddie.width;c.height=game.assets.freddie.height;x.scale(-1,1);x.drawImage(game.assets.freddie,-c.width,0);return c;})();
+        this.image = game.assets.freddie;
       
         this.width = 80;
         this.height = 50;

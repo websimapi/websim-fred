@@ -15,7 +15,7 @@ class Game {
         this.canvas.height = this.height;
 
         this.assetManifest = [
-            { name: 'freddie', type: 'image', src: 'freddie.png' },
+            { name: 'freddie', type: 'image', src: 'freddie.png', flip: true },
             { name: 'backgroundFar', type: 'image', src: 'background-far.png' },
             { name: 'backgroundMid', type: 'image', src: 'background-mid.png' },
             { name: 'backgroundNear', type: 'image', src: 'background-near.png' },
@@ -46,7 +46,18 @@ class Game {
                     const img = new Image();
                     img.src = assetInfo.src;
                     img.onload = () => {
-                        this.assets[assetInfo.name] = img;
+                        if (assetInfo.flip) {
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                            ctx.scale(-1, 1);
+                            ctx.drawImage(img, -img.width, 0);
+                            this.assets[assetInfo.name] = canvas;
+                        } else {
+                            this.assets[assetInfo.name] = img;
+                        }
+
                         loaded++;
                         this.loadingScreen.textContent = `Loading... ${Math.round((loaded / total) * 100)}%`;
                         resolve();
