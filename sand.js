@@ -238,8 +238,12 @@ export default class SandSim {
         for (let y = 0; y < this.rows; y++) {
             for (let x = 0; x < this.cols; x++) {
                 const i = y * this.cols + x;
+                const wx = x * this.cell + this.cell * 0.5, wy = topYWorld + y * this.cell + this.cell * 0.5;
                 if (!prev[i] && this.grid[i]) {
-                    const wx = x * this.cell + this.cell * 0.5, wy = topYWorld + y * this.cell + this.cell * 0.5;
+                    // Front gained sand: pull from back layer
+                    this._backdropRemoveAt(wx, wy, this.cell * 1.8, 0.7);
+                } else if (prev[i] && !this.grid[i]) {
+                    // Front lost sand: push into back layer
                     this._backdropAddAt(wx, wy, this.cell * 1.8, 0.7);
                 }
             }
