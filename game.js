@@ -126,6 +126,11 @@ class Game {
         
         this.playSound('ambient');
 
+        // Toggle coordinate display with ` or ~
+        window.addEventListener('keydown', (e) => {
+            if (e.key === '`' || e.key === '~') this.debug.showCoords = !this.debug.showCoords;
+        });
+
         this.gameLoop(0);
     }
 
