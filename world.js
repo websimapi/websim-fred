@@ -203,14 +203,23 @@ class World {
 
     drawSolidBackground(ctx, image, offsetX, offsetY) {
         if (!image) return;
-        
-        const pattern = ctx.createPattern(image, 'repeat');
-        ctx.fillStyle = pattern;
 
-        ctx.save();
-        ctx.translate(-offsetX, -offsetY);
-        ctx.fillRect(offsetX, offsetY, this.game.width, this.game.height);
-        ctx.restore();
+        const imgWidth = image.width;
+        const imgHeight = image.height;
+        if (imgWidth === 0 || imgHeight === 0) return;
+
+        const startCol = Math.floor(offsetX / imgWidth);
+        const startRow = Math.floor(offsetY / imgHeight);
+        const endCol = Math.ceil((offsetX + this.game.width) / imgWidth);
+        const endRow = Math.ceil((offsetY + this.game.height) / imgHeight);
+
+        for (let row = startRow; row < endRow; row++) {
+            for (let col = startCol; col < endCol; col++) {
+                const x = col * imgWidth - offsetX;
+                const y = row * imgHeight - offsetY;
+                ctx.drawImage(image, x, y, imgWidth, imgHeight);
+            }
+        }
     }
 }
 
