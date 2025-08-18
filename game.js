@@ -3,6 +3,7 @@ import World from 'world';
 import InputHandler from 'input';
 import { ParticleSystem } from 'particles';
 import { UI } from 'ui';
+import Camera from 'camera';
 
 class Game {
     constructor(canvas, loadingScreen) {
@@ -102,6 +103,7 @@ class Game {
         this.particleSystem = new ParticleSystem(this);
         this.world = new World(this);
         this.ui = new UI(this);
+        this.camera = new Camera(this);
 
         window.addEventListener('resize', () => {
             this.width = window.innerWidth;
@@ -142,14 +144,14 @@ class Game {
         this.player.update(this.input, deltaTime);
         this.world.update(deltaTime, this.player);
         this.particleSystem.update(deltaTime);
-
-        // Camera follow player
-        this.camera.x += (this.player.x - this.camera.x - this.width / 2) * 0.08;
-        this.camera.y += (this.player.y - this.camera.y - this.height / 2) * 0.08;
+        this.camera.update(this.player);
     }
 
     draw() {
         this.ctx.clearRect(0, 0, this.width, this.height);
+        
+        this.world.drawBackground(this.ctx, this.camera);
+        
         this.ctx.save();
         this.ctx.translate(-this.camera.x, -this.camera.y);
 
@@ -158,6 +160,8 @@ class Game {
         this.player.draw(this.ctx);
 
         this.ctx.restore();
+
+        this.world.drawForeground(this.ctx, this.camera);
         
         this.ui.draw(this.ctx);
     }

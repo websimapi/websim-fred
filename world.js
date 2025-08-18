@@ -131,15 +131,13 @@ class World {
         this.npcs.forEach(npc => npc.update(deltaTime, player));
     }
 
-    draw(ctx, camera) {
+    drawBackground(ctx, camera) {
         // Solid background layers
         const bgFar = this.game.assets.backgroundFar;
         const bgMid = this.game.assets.backgroundMid;
-        const bgNear = this.game.assets.backgroundNear;
 
         const parallaxFactorFar = 0.1;
         const parallaxFactorMid = 0.3;
-        const parallaxFactorNear = 0.6;
         
         // Draw solid backgrounds
         this.drawSolidBackground(ctx, bgFar, camera.x * parallaxFactorFar, camera.y * parallaxFactorFar);
@@ -153,7 +151,9 @@ class World {
         });
         ctx.restore();
         
+        ctx.globalAlpha = 0.5;
         this.drawSolidBackground(ctx, bgMid, camera.x * parallaxFactorMid, camera.y * parallaxFactorMid);
+        ctx.globalAlpha = 1;
         
         // Draw mid background entities
         ctx.save();
@@ -163,7 +163,28 @@ class World {
             ctx.drawImage(entity.image, entity.x - entity.width / 2, entity.y - entity.height / 2, entity.width, entity.height);
         });
         ctx.restore();
-        
+    }
+
+    drawForeground(ctx, camera) {
+        const bgNear = this.game.assets.backgroundNear;
+        const parallaxFactorNear = 0.6;
+
+        // Draw near background (foreground)
+        ctx.globalAlpha = 0.3;
+        this.drawSolidBackground(ctx, bgNear, camera.x * parallaxFactorNear, camera.y * parallaxFactorNear);
+        ctx.globalAlpha = 1;
+
+        // Draw near background entities
+        ctx.save();
+        ctx.translate(-camera.x * parallaxFactorNear, -camera.y * parallaxFactorNear);
+        this.backgroundEntities.near.forEach(entity => {
+            ctx.globalAlpha = entity.alpha;
+            ctx.drawImage(entity.image, entity.x - entity.width / 2, entity.y - entity.height / 2, entity.width, entity.height);
+        });
+        ctx.restore();
+    }
+
+    draw(ctx, camera) {
         // Draw collectibles
         this.collectibles.forEach(item => {
             if (!item.collected) {
@@ -178,25 +199,17 @@ class World {
 
         // Draw NPCs
         this.npcs.forEach(npc => npc.draw(ctx));
-
-        // Draw near background (foreground)
-        this.drawSolidBackground(ctx, bgNear, camera.x * parallaxFactorNear, camera.y * parallaxFactorNear);
-        
-        // Draw near background entities
-        ctx.save();
-        ctx.translate(-camera.x * parallaxFactorNear, -camera.y * parallaxFactorNear);
-        this.backgroundEntities.near.forEach(entity => {
-            ctx.globalAlpha = entity.alpha;
-            ctx.drawImage(entity.image, entity.x - entity.width / 2, entity.y - entity.height / 2, entity.width, entity.height);
-        });
-        ctx.restore();
     }
 
     drawSolidBackground(ctx, image, offsetX, offsetY) {
         if (!image) return;
+        
+        const pattern = ctx.createPattern(image, 'repeat');
+        ctx.fillStyle = pattern;
+
         ctx.save();
         ctx.translate(-offsetX, -offsetY);
-        ctx.drawImage(image, 0, 0, this.game.width + Math.abs(offsetX) * 2, this.game.height + Math.abs(offsetY) * 2);
+        ctx.fillRect(offsetX, offsetY, this.game.width, this.game.height);
         ctx.restore();
     }
 }
