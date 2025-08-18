@@ -279,8 +279,14 @@ class World {
             while (!placed && tries++ < 50) {
                 const x = Math.random() * this.bounds.width;
                 const surf = sand.getBackSurfaceY(x);
-                if (isFinite(surf)) {
-                    addPearl(x, surf + 12, 'back_sand');
+                const cx = Math.max(0, Math.min(sand.cols - 1, Math.floor(x / sand.cell)));
+                const top = this.bounds.height - sand.backdropRows * sand.cell;
+                const minFill = Math.floor(sand.backdropRows * sand.backMinProfile[cx]);
+                const lineY = top + (sand.backdropRows - minFill) * sand.cell;
+                const bury = 12;
+                const yCandidate = Math.min(surf + bury, lineY - 4);
+                if (isFinite(surf) && yCandidate > surf + 6) {
+                    addPearl(x, yCandidate, 'back_sand');
                     placed = true;
                 }
             }
