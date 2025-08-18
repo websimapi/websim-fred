@@ -20,6 +20,7 @@ export default class SandSim {
         this.bufferBackdrop = new Uint8Array(this.cols * this.backdropRows);
         this.backdropColors = this._makeDarkerPalette();
         this._seedBackdrop();
+        this.backdropHalf = Math.floor(this.backdropRows / 2);
     }
     onResize() { this._init(); }
     _idx(x, y) { return y * this.cols + x; }
@@ -221,8 +222,12 @@ export default class SandSim {
     // Remove from backdrop within a radius (probabilistic)
     _backdropRemoveAt(wx, wy, rPx, prob = 0.6) {
         const { bx, by } = this._worldToBackdrop(wx, wy);
+        // Guard: don't pull if column is at/below half full
+        let bHeight = 0; for (let y = this.backdropRows - 1; y >= 0; y--) if (this.backdropGrid[y * this.cols + bx]) bHeight++;
+        if (bHeight <= this.backdropHalf) return;
         const r = Math.max(1, Math.floor(rPx / this.cell));
         for (let y = by - r; y <= by + r; y++) {
+            if (y > this.backdropHalf) continue; // never pull from bottom half
             for (let x = bx - r; x <= bx + r; x++) {
                 if (x < 0 || x >= this.cols || y < 0 || y >= this.backdropRows) continue;
                 const dx = x - bx, dy = y - by;
@@ -240,11 +245,13 @@ export default class SandSim {
                 const i = y * this.cols + x;
                 const wx = x * this.cell + this.cell * 0.5, wy = topYWorld + y * this.cell + this.cell * 0.5;
                 if (!prev[i] && this.grid[i]) {
-                    // Front gained sand: pull from back layer
-                    this._backdropRemoveAt(wx, wy, this.cell * 1.8, 0.7);
+                    // Front gained sand: only pull from back upper half and if back > half-full
+                    const { bx, by } = this._worldToBackdrop(wx, wy);
+                    let bH = 0; for (let ky = this.backdropRows - 1; ky >= 0; ky--) if (this.backdropGrid[ky * this.cols + bx]) bH++;
+                    if (by < this.backdropHalf && bH > this.backdropHalf) this._backdropRemoveAt(wx, wy, this.cell * 1.8, 0.7);
                 } else if (prev[i] && !this.grid[i]) {
-                    // Front lost sand: push into back layer
-                    this._backdropAddAt(wx, wy, this.cell * 1.8, 0.7);
+                    // Front lost sand: push into back (regenerate)
+                    this._backdropAddAt(wx, wy, this.cell * 1.8, 0.8);
                 }
             }
         }
@@ -255,7 +262,8 @@ export default class SandSim {
             let f = 0, b = 0;
             for (let y = this.rows - 1; y >= 0; y--) if (this.grid[this._idx(x, y)]) f++;
             for (let y = this.backdropRows - 1; y >= 0; y--) if (this.backdropGrid[this._idxB(x, y)]) b++;
-            if (b < f) for (let k = 0; k < f; k++) this.backdropGrid[this._idxB(x, this.backdropRows - 1 - k)] = 1;
+            const minBack = Math.max(f, this.backdropHalf);
+            if (b < minBack) for (let k = b; k < minBack; k++) this.backdropGrid[this._idxB(x, this.backdropRows - 1 - k)] = 1;
         }
     }
 }
