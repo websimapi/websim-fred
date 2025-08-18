@@ -58,7 +58,7 @@ class World {
             const h = Math.random() * 120 + 160;
             this.scenery.push({
                 x: Math.random() * this.bounds.width,
-                y: crabLevelY,
+                y: crabLevelY + 15,
                 image: img,
                 width: w,
                 height: h
@@ -76,7 +76,7 @@ class World {
             const height = Math.random() * 100 + 75;
             this.backgroundEntities.far.push({
                 x: Math.random() * this.bounds.width,
-                y: 1800, // place rocks around 1800Y
+                y: 1815,
                 image: this.game.assets.rock,
                 type: 'rock',
                 width: width,
@@ -93,7 +93,7 @@ class World {
             const height = Math.random() * 180 + 140;
             this.backgroundEntities.mid.push({
                 x: Math.random() * this.bounds.width,
-                y: (entityType === 'rock' || entityType === 'coral') ? 1800 : this.bounds.height - (height / 2) - (Math.random() * 50),
+                y: (entityType === 'rock' || entityType === 'coral') ? 1815 : this.bounds.height - (height / 2) - (Math.random() * 50),
                 image: this.game.assets[entityType],
                 type: entityType,
                 width: width,
@@ -110,7 +110,7 @@ class World {
             const height = Math.random() * 120 + 180;
             this.backgroundEntities.near.push({
                 x: Math.random() * this.bounds.width,
-                y: (entityType === 'rock' || entityType === 'coral') ? 1800 : this.bounds.height - (height / 2) - (Math.random() * 70),
+                y: (entityType === 'rock' || entityType === 'coral') ? 1815 : this.bounds.height - (height / 2) - (Math.random() * 70),
                 image: this.game.assets[entityType],
                 type: entityType,
                 width: width,
@@ -121,11 +121,11 @@ class World {
 
         // Ensure at least two visible landmark rocks near the bottom
         this.backgroundEntities.near.push({
-            x: 1200, y: 1800, image: this.game.assets.rock, type: 'rock',
+            x: 1200, y: 1815, image: this.game.assets.rock, type: 'rock',
             width: 320, height: 200, alpha: 1
         });
         this.backgroundEntities.near.push({
-            x: 1800, y: 1800, image: this.game.assets.coral, type: 'coral',
+            x: 1800, y: 1815, image: this.game.assets.coral, type: 'coral',
             width: 260, height: 220, alpha: 0.9
         });
     }
