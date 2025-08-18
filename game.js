@@ -26,7 +26,7 @@ class Game {
             { name: 'jellyfish', type: 'image', src: 'jellyfish.png' },
             { name: 'bubble', type: 'image', src: 'bubble.png' },
             { name: 'sparkle', type: 'image', src: 'sparkle.png' },
-            { name: 'coral', type: 'image', src: 'coral.png' },
+            { name: 'coral', type: 'image', src: 'coral.png', chromaKeyBlue: true },
             { name: 'seaweed', type: 'image', src: 'seaweed.png' },
             { name: 'rock', type: 'image', src: 'rock.png' },
             { name: 'collect', type: 'audio', src: 'collect.mp3' },
@@ -63,7 +63,18 @@ class Game {
                             ctx.drawImage(img, -img.width, 0);
                             this.assets[assetInfo.name] = canvas;
                         } else {
-                            this.assets[assetInfo.name] = img;
+                            if (assetInfo.chromaKeyBlue) {
+                                const src = this.assets[assetInfo.name];
+                                const c = document.createElement('canvas'); c.width = src.width; c.height = src.height;
+                                const cx = c.getContext('2d'); cx.drawImage(src, 0, 0);
+                                const imgd = cx.getImageData(0, 0, c.width, c.height), d = imgd.data;
+                                for (let i = 0; i < d.length; i += 4) { const r = d[i], g = d[i+1], b = d[i+2];
+                                    if (b > 140 && b > r + 20 && b > g + 20) d[i + 3] = 0;
+                                }
+                                cx.putImageData(imgd, 0, 0); this.assets[assetInfo.name] = c;
+                            } else {
+                                this.assets[assetInfo.name] = img;
+                            }
                         }
 
                         loaded++;
