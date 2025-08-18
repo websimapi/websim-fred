@@ -244,4 +244,44 @@ export default class SandSim {
             }
         }
     }
+
+    getFrontSurfaceY(worldX) {
+        const top = this.game.world.bounds.height - this.rows * this.cell;
+        const cx = Math.max(0, Math.min(this.cols - 1, Math.floor(worldX / this.cell)));
+        for (let y = 0; y < this.rows; y++) if (this.grid[this._idx(cx, y)]) return top + y * this.cell;
+        return top + this.rows * this.cell;
+    }
+
+    getBackSurfaceY(worldX) {
+        const top = this.game.world.bounds.height - this.backdropRows * this.cell;
+        const cx = Math.max(0, Math.min(this.cols - 1, Math.floor(worldX / this.cell)));
+        for (let y = 0; y < this.backdropRows; y++) if (this.backdropGrid[this._backIdx(cx, y)]) return top + y * this.cell;
+        return top + this.backdropRows * this.cell;
+    }
+
+    isFrontFilledAt(worldX, worldY, radius = 8) {
+        const top = this.game.world.bounds.height - this.rows * this.cell;
+        if (worldY < top || worldY > top + this.rows * this.cell) return false;
+        const r = Math.max(1, Math.floor(radius / this.cell));
+        const cx = Math.floor(worldX / this.cell);
+        const cy = Math.floor((worldY - top) / this.cell);
+        for (let y = cy - r; y <= cy + r; y++)
+            for (let x = cx - r; x <= cx + r; x++)
+                if (this._inBounds(x, y) && this.grid[this._idx(x, y)]) return true;
+        return false;
+    }
+
+    isBackFilledAt(worldX, worldY, radius = 8) {
+        const top = this.game.world.bounds.height - this.backdropRows * this.cell;
+        if (worldY < top || worldY > top + this.backdropRows * this.cell) return false;
+        const r = Math.max(1, Math.floor(radius / this.cell));
+        const cx = Math.floor(worldX / this.cell);
+        const cy = Math.floor((worldY - top) / this.cell);
+        for (let y = cy - r; y <= cy + r; y++)
+            for (let x = cx - r; x <= cx + r; x++) {
+                if (x < 0 || x >= this.cols || y < 0 || y >= this.backdropRows) continue;
+                if (this.backdropGrid[this._backIdx(x, y)]) return true;
+            }
+        return false;
+    }
 }

@@ -141,6 +141,9 @@ class Game {
         
         this.playSound('ambient');
 
+        // place pearls now that sand is initialized
+        this.world.placePearls(this.sand);
+
         // Toggle coordinate display with ` or ~
         window.addEventListener('keydown', (e) => {
             if (e.key === '`' || e.key === '~') this.debug.showCoords = !this.debug.showCoords;

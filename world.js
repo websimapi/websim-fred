@@ -17,19 +17,6 @@ class World {
     }
 
     generate() {
-        // Generate pearls
-        for (let i = 0; i < 50; i++) {
-            this.collectibles.push({
-                x: Math.random() * this.bounds.width,
-                y: Math.random() * this.bounds.height,
-                type: 'pearl',
-                image: this.game.assets.pearl,
-                width: 30,
-                height: 30,
-                collected: false
-            });
-        }
-        
         // Generate hazards (jellyfish)
          for (let i = 0; i < 15; i++) {
             this.hazards.push({
@@ -136,7 +123,11 @@ class World {
             if (!item.collected) {
                 const dx = player.x - item.x;
                 const dy = player.y - item.y;
-                if (Math.sqrt(dx * dx + dy * dy) < (player.width/2 + item.width/2)) {
+                const within = Math.sqrt(dx * dx + dy * dy) < (player.width/2 + item.width/2);
+                let covered = false;
+                if (item.layer === 'front_sand') covered = this.game.sand?.isFrontFilledAt(item.x, item.y, item.width * 0.4);
+                if (item.layer === 'back_sand')  covered = this.game.sand?.isBackFilledAt(item.x, item.y, item.width * 0.4);
+                if (within && !covered) {
                     item.collected = true;
                     player.pearls++;
                     this.game.playSound('collect', 1.5);
@@ -237,9 +228,9 @@ class World {
 
         // Draw collectibles
         this.collectibles.forEach(item => {
-            if (!item.collected) {
-                ctx.drawImage(item.image, item.x - item.width / 2, item.y - item.height / 2, item.width, item.height);
-            }
+            if (item.collected) return;
+            if (item.layer === 'back_sand' && this.game.sand?.isBackFilledAt(item.x, item.y, item.width * 0.4)) return;
+            ctx.drawImage(item.image, item.x - item.width / 2, item.y - item.height / 2, item.width, item.height);
         });
         
         // Draw hazards
@@ -257,6 +248,48 @@ class World {
         // Instead of tiling, draw the image to cover the entire world bounds.
         // The camera clamping will handle showing black void at edges.
         ctx.drawImage(image, 0, 0, this.bounds.width, this.bounds.height);
+    }
+
+    placePearls(sand) {
+        this.collectibles.length = 0;
+        const addPearl = (x, y, layer) => {
+            this.collectibles.push({
+                x, y, layer,
+                type: 'pearl',
+                image: this.game.assets.pearl,
+                width: 30, height: 30,
+                collected: false
+            });
+        };
+        // 2 front-sand pearls: slightly below the front surface so they're buried
+        for (let i = 0; i < 2; i++) {
+            let tries = 0, placed = false;
+            while (!placed && tries++ < 50) {
+                const x = Math.random() * this.bounds.width;
+                const surf = sand.getFrontSurfaceY(x);
+                if (isFinite(surf) && surf < this.bounds.height - 5) {
+                    addPearl(x, surf + 12, 'front_sand');
+                    placed = true;
+                }
+            }
+        }
+        // 2 back-sand pearls: just under the back surface so hidden until cleared
+        for (let i = 0; i < 2; i++) {
+            let tries = 0, placed = false;
+            while (!placed && tries++ < 50) {
+                const x = Math.random() * this.bounds.width;
+                const surf = sand.getBackSurfaceY(x);
+                if (isFinite(surf)) {
+                    addPearl(x, surf + 12, 'back_sand');
+                    placed = true;
+                }
+            }
+        }
+        // 1 ocean pearl somewhere away from sand bands
+        const bandTop = this.bounds.height - sand.rows * sand.cell;
+        const x = Math.random() * this.bounds.width;
+        const y = Math.random() * (bandTop - 400) + 150;
+        addPearl(x, y, 'ocean');
     }
 }
 
