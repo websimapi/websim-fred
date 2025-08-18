@@ -101,9 +101,7 @@ export default class SandSim {
         const topYWorld = this.game.world.bounds.height - this.rows * this.cell;
         ctx.save();
         ctx.translate(-this.game.camera.x, -this.game.camera.y);
-        ctx.globalAlpha = 0.9;
-        ctx.fillStyle = 'rgba(230,215,170,0.25)';
-        ctx.fillRect(0, topYWorld, this.cols * this.cell, this.rows * this.cell);
+        ctx.globalAlpha = 1;
         // Draw particles
         for (let y = 0; y < this.rows; y++) {
             for (let x = 0; x < this.cols; x++) {
