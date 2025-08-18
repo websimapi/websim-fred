@@ -287,7 +287,7 @@ class World {
             }
             return false;
         };
-        const createBackdropMound = (sand, worldX, worldY, radiusPx = 28) => {
+        const createBackdropMound = (sand, worldX, worldY, radiusPx = 18) => {
             const cell = sand.cell;
             const top = this.bounds.height - sand.backdropRows * cell;
             const cx = Math.max(0, Math.min(sand.cols - 1, Math.floor(worldX / cell)));
@@ -307,6 +307,7 @@ class World {
             let tries = 0, placed = false;
             while (!placed && tries++ < 50) {
                 const x = Math.random() * this.bounds.width;
+                if (x < 100 || x > this.bounds.width - 100) continue; // avoid edges
                 const surf = sand.getFrontSurfaceY(x);
                 if (isFinite(surf) && surf < this.bounds.height - 5) {
                     addPearl(x, surf + 12, 'front_sand');
@@ -317,22 +318,23 @@ class World {
         // 2 back-sand pearls: just under the back surface so hidden until cleared
         for (let i = 0; i < 2; i++) {
             let tries = 0, placed = false;
-            while (!placed && tries++ < 50) {
+            while (!placed && tries++ < 200) {
                 const x = Math.random() * this.bounds.width;
+                if (x < 100 || x > this.bounds.width - 100) continue; // avoid edges
                 const surf = sand.getBackSurfaceY(x);
                 const cx = Math.max(0, Math.min(sand.cols - 1, Math.floor(x / sand.cell)));
                 const top = this.bounds.height - sand.backdropRows * sand.cell;
                 const minFill = Math.floor(sand.backdropRows * sand.backMinProfile[cx]);
                 const lineY = top + (sand.backdropRows - minFill) * sand.cell;
-                const bury = 6;
-                const yCandidate = Math.min(surf + bury, lineY - 8);
-                const topPortionMaxY = top + sand.backdropRows * sand.cell * 0.6;
+                const bury = 2;
+                const yCandidate = Math.min(surf + bury, lineY - 12);
+                const topPortionMaxY = top + sand.backdropRows * sand.cell * 0.4; // keep in top 40%
                 const behindSand = sand.isBackFilledAt(x, yCandidate, 12);
                 const safe = !collidesWithHazardsOrNPCs(x, yCandidate, 60)
-                           && !collidesWithSceneryOrBackground(x, yCandidate, 80);
+                            && !collidesWithSceneryOrBackground(x, yCandidate, 80);
                 if (isFinite(surf) && yCandidate > surf + 4 && yCandidate <= topPortionMaxY && behindSand && safe) {
                     addPearl(x, yCandidate, 'back_sand');
-                    createBackdropMound(sand, x, yCandidate, 30);
+                    createBackdropMound(sand, x, yCandidate, 18); // lighter cover for discoverability
                     placed = true;
                 }
             }
