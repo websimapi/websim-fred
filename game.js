@@ -26,6 +26,7 @@ class Game {
             { name: 'sparkle', type: 'image', src: 'sparkle.png' },
             { name: 'coral', type: 'image', src: 'coral.png' },
             { name: 'seaweed', type: 'image', src: 'seaweed.png' },
+            { name: 'rock', type: 'image', src: 'rock.png' },
             { name: 'collect', type: 'audio', src: 'collect.mp3' },
             { name: 'dash', type: 'audio', src: 'dash.mp3' },
             { name: 'bump', type: 'audio', src: 'bump.mp3' },

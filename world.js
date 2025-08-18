@@ -7,7 +7,11 @@ class World {
         this.collectibles = [];
         this.npcs = [];
         this.hazards = [];
-        this.scenery = [];
+        this.backgroundEntities = {
+            far: [],
+            mid: [],
+            near: []
+        };
         this.generate();
     }
 
@@ -41,22 +45,53 @@ class World {
             });
         }
 
-        // Generate Scenery
-        for (let i = 0; i < 30; i++) {
-            this.scenery.push({
-                x: Math.random() * this.bounds.width,
-                y: this.bounds.height - (Math.random() * 50 + 40), // On the seabed
-                image: Math.random() > 0.5 ? this.game.assets.coral : this.game.assets.seaweed,
-                width: Math.random() * 50 + 50,
-                height: Math.random() * 80 + 80,
-                parallax: 0.45 // Slightly faster than mid background
-            });
-        }
-        // Sort scenery by y-position to create depth
-        this.scenery.sort((a, b) => a.y - b.y);
-
         // Add NPCs
         this.npcs.push(new Crab(800, this.bounds.height - 100, this.game));
+        
+        // Generate background entities
+        this.generateBackgroundEntities();
+    }
+    
+    generateBackgroundEntities() {
+        // Far background entities (large, distant)
+        for (let i = 0; i < 8; i++) {
+            this.backgroundEntities.far.push({
+                x: Math.random() * this.bounds.width,
+                y: Math.random() * this.bounds.height,
+                image: this.game.assets.rock,
+                width: Math.random() * 200 + 150,
+                height: Math.random() * 100 + 75,
+                alpha: 0.3
+            });
+        }
+        
+        // Mid background entities
+        for (let i = 0; i < 12; i++) {
+            const entities = ['coral', 'seaweed', 'rock'];
+            const entityType = entities[Math.floor(Math.random() * entities.length)];
+            this.backgroundEntities.mid.push({
+                x: Math.random() * this.bounds.width,
+                y: Math.random() * this.bounds.height,
+                image: this.game.assets[entityType],
+                width: Math.random() * 120 + 80,
+                height: Math.random() * 150 + 100,
+                alpha: 0.5
+            });
+        }
+        
+        // Near background entities
+        for (let i = 0; i < 15; i++) {
+            const entities = ['coral', 'seaweed'];
+            const entityType = entities[Math.floor(Math.random() * entities.length)];
+            this.backgroundEntities.near.push({
+                x: Math.random() * this.bounds.width,
+                y: Math.random() * this.bounds.height,
+                image: this.game.assets[entityType],
+                width: Math.random() * 80 + 60,
+                height: Math.random() * 120 + 80,
+                alpha: 0.7
+            });
+        }
     }
 
     update(deltaTime, player) {
@@ -97,7 +132,7 @@ class World {
     }
 
     draw(ctx, camera) {
-        // Parallax background
+        // Solid background layers
         const bgFar = this.game.assets.backgroundFar;
         const bgMid = this.game.assets.backgroundMid;
         const bgNear = this.game.assets.backgroundNear;
@@ -106,17 +141,28 @@ class World {
         const parallaxFactorMid = 0.3;
         const parallaxFactorNear = 0.6;
         
-        this.drawParallaxLayer(ctx, bgFar, camera, parallaxFactorFar);
-        this.drawParallaxLayer(ctx, bgMid, camera, parallaxFactorMid);
+        // Draw solid backgrounds
+        this.drawSolidBackground(ctx, bgFar, camera.x * parallaxFactorFar, camera.y * parallaxFactorFar);
         
-        // Draw scenery
-        this.scenery.forEach(item => {
-            // Basic culling
-            const screenX = item.x - camera.x;
-            if (screenX + item.width > 0 && screenX < this.game.width) {
-                 ctx.drawImage(item.image, item.x - item.width / 2, item.y - item.height, item.width, item.height);
-            }
+        // Draw far background entities
+        ctx.save();
+        ctx.translate(-camera.x * parallaxFactorFar, -camera.y * parallaxFactorFar);
+        this.backgroundEntities.far.forEach(entity => {
+            ctx.globalAlpha = entity.alpha;
+            ctx.drawImage(entity.image, entity.x - entity.width / 2, entity.y - entity.height / 2, entity.width, entity.height);
         });
+        ctx.restore();
+        
+        this.drawSolidBackground(ctx, bgMid, camera.x * parallaxFactorMid, camera.y * parallaxFactorMid);
+        
+        // Draw mid background entities
+        ctx.save();
+        ctx.translate(-camera.x * parallaxFactorMid, -camera.y * parallaxFactorMid);
+        this.backgroundEntities.mid.forEach(entity => {
+            ctx.globalAlpha = entity.alpha;
+            ctx.drawImage(entity.image, entity.x - entity.width / 2, entity.y - entity.height / 2, entity.width, entity.height);
+        });
+        ctx.restore();
         
         // Draw collectibles
         this.collectibles.forEach(item => {
@@ -133,35 +179,25 @@ class World {
         // Draw NPCs
         this.npcs.forEach(npc => npc.draw(ctx));
 
-        // Foreground
-        this.drawParallaxLayer(ctx, bgNear, camera, parallaxFactorNear);
-
+        // Draw near background (foreground)
+        this.drawSolidBackground(ctx, bgNear, camera.x * parallaxFactorNear, camera.y * parallaxFactorNear);
+        
+        // Draw near background entities
+        ctx.save();
+        ctx.translate(-camera.x * parallaxFactorNear, -camera.y * parallaxFactorNear);
+        this.backgroundEntities.near.forEach(entity => {
+            ctx.globalAlpha = entity.alpha;
+            ctx.drawImage(entity.image, entity.x - entity.width / 2, entity.y - entity.height / 2, entity.width, entity.height);
+        });
+        ctx.restore();
     }
 
-    drawParallaxLayer(ctx, image, camera, parallaxFactor) {
-        if (!image || !image.width || !image.height) return;
-
-        const canvas = this.game.canvas;
-        const imgAspectRatio = image.width / image.height;
-        const canvasAspectRatio = canvas.width / canvas.height;
-
-        let drawWidth, drawHeight;
-
-        if (imgAspectRatio > canvasAspectRatio) {
-            // Image is wider than canvas, so height is the constraining dimension
-            drawHeight = canvas.height;
-            drawWidth = drawHeight * imgAspectRatio;
-        } else {
-            // Image is taller or same aspect ratio, so width is the constraining dimension
-            drawWidth = canvas.width;
-            drawHeight = drawWidth / imgAspectRatio;
-        }
-
-        // Center the image
-        const x = camera.x * parallaxFactor - (drawWidth - canvas.width) / 2;
-        const y = camera.y * parallaxFactor - (drawHeight - canvas.height) / 2;
-
-        ctx.drawImage(image, x, y, drawWidth, drawHeight);
+    drawSolidBackground(ctx, image, offsetX, offsetY) {
+        if (!image) return;
+        ctx.save();
+        ctx.translate(-offsetX, -offsetY);
+        ctx.drawImage(image, 0, 0, this.game.width + Math.abs(offsetX) * 2, this.game.height + Math.abs(offsetY) * 2);
+        ctx.restore();
     }
 }
 
