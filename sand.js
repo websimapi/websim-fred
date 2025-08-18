@@ -4,6 +4,7 @@ export default class SandSim {
         this.cell = cell;
         this.bandHeight = bandHeight;
         this.stepsPerFrame = 2;
+        this.backdropStepsPerFrame = 2;
         this._init();
         this._lastGrid = null;
     }
@@ -16,6 +17,7 @@ export default class SandSim {
         this._seedBed();
         this.backdropRows = this.rows * 2;
         this.backdropGrid = new Uint8Array(this.cols * this.backdropRows);
+        this.bufferBackdrop = new Uint8Array(this.cols * this.backdropRows);
         this.backdropColors = this._makeDarkerPalette();
         this._seedBackdrop();
     }
@@ -92,6 +94,22 @@ export default class SandSim {
         // Swap
         const tmp = this.grid; this.grid = this.buffer; this.buffer = tmp;
     }
+    _idxB(x, y) { return y * this.cols + x; }
+    _inBoundsBackdrop(x, y) { return x >= 0 && x < this.cols && y >= 0 && y < this.backdropRows; }
+    _stepBackdrop() {
+        this.bufferBackdrop.fill(0);
+        for (let y = this.backdropRows - 1; y >= 0; y--) {
+            for (let x = 0; x < this.cols; x++) {
+                if (!this.backdropGrid[this._idxB(x, y)]) continue;
+                if (this._inBoundsBackdrop(x, y + 1) && !this.backdropGrid[this._idxB(x, y + 1)] && !this.bufferBackdrop[this._idxB(x, y + 1)]) { this.bufferBackdrop[this._idxB(x, y + 1)] = 1; continue; }
+                const dir = Math.random() < 0.5 ? -1 : 1, dx1 = x + dir, dx2 = x - dir, ny = y + 1;
+                if (this._inBoundsBackdrop(dx1, ny) && !this.backdropGrid[this._idxB(dx1, ny)] && !this.bufferBackdrop[this._idxB(dx1, ny)]) this.bufferBackdrop[this._idxB(dx1, ny)] = 1;
+                else if (this._inBoundsBackdrop(dx2, ny) && !this.backdropGrid[this._idxB(dx2, ny)] && !this.bufferBackdrop[this._idxB(dx2, ny)]) this.bufferBackdrop[this._idxB(dx2, ny)] = 1;
+                else if (!this.bufferBackdrop[this._idxB(x, y)]) this.bufferBackdrop[this._idxB(x, y)] = 1;
+            }
+        }
+        const t = this.backdropGrid; this.backdropGrid = this.bufferBackdrop; this.bufferBackdrop = t;
+    }
     impulseAt(worldX, worldY, radiusPx, dirX = 0) {
         const topYWorld = this.game.world.bounds.height - this.rows * this.cell;
         const cx = Math.floor(worldX / this.cell);
@@ -127,6 +145,7 @@ export default class SandSim {
         for (let i = 0; i < this.stepsPerFrame; i++) this._step();
         this._applyNoSandMask();
         this._syncBackdropFromFront(this._lastGrid);
+        for (let i = 0; i < this.backdropStepsPerFrame; i++) this._stepBackdrop();
     }
     draw(ctx) {
         const topYWorld = this.game.world.bounds.height - this.rows * this.cell;
