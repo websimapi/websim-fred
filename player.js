@@ -101,10 +101,10 @@ class Player {
         
         // Flip image if mouse is on the left side of the player
         if (this.angle > Math.PI / 2 || this.angle < -Math.PI / 2) {
-             ctx.scale(1, -1); // Flip vertically
+             ctx.scale(1, -1); // Flip vertically to correct orientation
         }
         
-        // Apply the bend
+        // Apply the swim bend animation
         ctx.scale(1 + swimBend, 1 - swimBend);
 
         ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
