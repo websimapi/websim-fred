@@ -3,7 +3,9 @@ import { ParticleSystem } from 'particles';
 class Player {
     constructor(x, y, game) {
         this.game = game;
-        this.image = game.assets.freddie;
+           // 🔥 One-liner flip
+        this.image = (()=>{let c=document.createElement("canvas"),x=c.getContext("2d");c.width=game.assets.freddie.width;c.height=game.assets.freddie.height;x.scale(-1,1);x.drawImage(game.assets.freddie,-c.width,0);return c;})();
+      
         this.width = 80;
         this.height = 50;
         this.x = x;
@@ -101,10 +103,10 @@ class Player {
         
         // Flip image if mouse is on the left side of the player
         if (this.angle > Math.PI / 2 || this.angle < -Math.PI / 2) {
-             ctx.scale(1, -1); // Flip vertically to correct orientation
+             ctx.scale(1, -1); // Flip vertically
         }
         
-        // Apply the swim bend animation
+        // Apply the bend
         ctx.scale(1 + swimBend, 1 - swimBend);
 
         ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
