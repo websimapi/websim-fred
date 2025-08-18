@@ -202,15 +202,27 @@ class World {
     }
 
     drawSolidBackground(ctx, image, offsetX, offsetY) {
-        if (!image) return;
-        
-        const pattern = ctx.createPattern(image, 'repeat');
-        ctx.fillStyle = pattern;
+        if (!image || !image.width || !image.height) return;
 
-        ctx.save();
-        ctx.translate(-offsetX, -offsetY);
-        ctx.fillRect(offsetX, offsetY, this.game.width, this.game.height);
-        ctx.restore();
+        const imgWidth = image.width;
+        const imgHeight = image.height;
+        const screenWidth = this.game.width;
+        const screenHeight = this.game.height;
+
+        // Calculate the starting drawing position of the top-left tile.
+        // We use the modulo operator to find where the pattern should begin
+        // based on the camera's offset, creating the scrolling effect.
+        const startX = -((offsetX % imgWidth + imgWidth) % imgWidth);
+        const startY = -((offsetY % imgHeight + imgHeight) % imgHeight);
+
+        // Loop to draw tiles horizontally and vertically until the entire screen is filled.
+        for (let y = startY; y < screenHeight; y += imgHeight) {
+            for (let x = startX; x < screenWidth; x += imgWidth) {
+                // By flooring the coordinates, we prevent sub-pixel rendering issues
+                // which are a common cause of visible seams between tiles.
+                ctx.drawImage(image, Math.floor(x), Math.floor(y), imgWidth, imgHeight);
+            }
+        }
     }
 }
 
