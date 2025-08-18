@@ -55,13 +55,15 @@ class World {
     generateBackgroundEntities() {
         // Far background entities (large, distant)
         for (let i = 0; i < 8; i++) {
+            const width = Math.random() * 200 + 150;
+            const height = Math.random() * 100 + 75;
             this.backgroundEntities.far.push({
                 x: Math.random() * this.bounds.width,
-                y: Math.random() * this.bounds.height,
+                y: this.bounds.height - (height / 2),
                 image: this.game.assets.rock,
                 type: 'rock',
-                width: Math.random() * 200 + 150,
-                height: Math.random() * 100 + 75,
+                width: width,
+                height: height,
                 alpha: 0.3
             });
         }
@@ -70,13 +72,21 @@ class World {
         for (let i = 0; i < 12; i++) {
             const entities = ['coral', 'seaweed', 'rock'];
             const entityType = entities[Math.floor(Math.random() * entities.length)];
+            const width = Math.random() * 120 + 80;
+            const height = Math.random() * 150 + 100;
+            let yPos = Math.random() * this.bounds.height;
+
+            if (entityType === 'rock') {
+                yPos = this.bounds.height - height / 2;
+            }
+            
             this.backgroundEntities.mid.push({
                 x: Math.random() * this.bounds.width,
-                y: Math.random() * this.bounds.height,
+                y: yPos,
                 image: this.game.assets[entityType],
                 type: entityType,
-                width: Math.random() * 120 + 80,
-                height: Math.random() * 150 + 100,
+                width: width,
+                height: height,
                 alpha: 0.5
             });
         }
