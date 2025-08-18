@@ -180,11 +180,11 @@ export default class SandSim {
         // Player-sand interaction
         const bandTopWorld = this.game.world.bounds.height - this.rows * this.cell;
         const px = player.x, py = player.y;
-        const pr = Math.max(player.width, player.height) * 0.4;
+        const pr = Math.max(player.width, player.height) * 0.5;
         if (py + pr > bandTopWorld - 4) {
             const speed = Math.hypot(player.vx, player.vy);
-            const radius = Math.min(40, 12 + speed * 0.03);
-            if (speed > 40) this.impulseAt(px, Math.max(py, bandTopWorld + 2), radius, Math.cos(player.angle), py, speed);
+            const radius = Math.min(60, player.width * 0.6 + speed * 0.02);
+            if (speed > 40) this.impulseAt(px, Math.max(py + 5, bandTopWorld + 2), radius, Math.cos(player.angle), py, speed);
         }
         for (let i = 0; i < this.stepsPerFrame; i++) this._step();
         for (let i = 0; i < this.backdropStepsPerFrame; i++) this._stepBackdrop();
