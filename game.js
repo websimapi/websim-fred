@@ -163,6 +163,7 @@ class Game {
         this.ctx.clearRect(0, 0, this.width, this.height);
         
         this.world.drawBackground(this.ctx, this.camera);
+        if (this.sand) this.sand.drawBackdrop(this.ctx);
         
         this.ctx.save();
         this.ctx.translate(-this.camera.x, -this.camera.y);

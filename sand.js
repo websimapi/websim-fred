@@ -13,6 +13,10 @@ export default class SandSim {
         this.buffer = new Uint8Array(this.cols * this.rows);
         this.colors = this._makePalette();
         this._seedBed();
+        this.backdropRows = this.rows * 2;
+        this.backdropGrid = new Uint8Array(this.cols * this.backdropRows);
+        this.backdropColors = this._makeDarkerPalette();
+        this._seedBackdrop();
     }
     onResize() { this._init(); }
     _idx(x, y) { return y * this.cols + x; }
@@ -37,6 +41,26 @@ export default class SandSim {
             c.push(`rgb(${r},${g},${b})`);
         }
         return c;
+    }
+    _makeDarkerPalette() {
+        const c = [];
+        for (let i = 0; i < 4; i++) {
+            const r = 185 + ((Math.random() * 15) | 0);
+            const g = 165 + ((Math.random() * 18) | 0);
+            const b = 130 + ((Math.random() * 15) | 0);
+            c.push(`rgb(${r},${g},${b})`);
+        }
+        return c;
+    }
+    _seedBackdrop() {
+        const base = Math.floor(this.backdropRows * 0.55);
+        for (let x = 0; x < this.cols; x++) {
+            const wobble = Math.floor((Math.sin(x * 0.12) + Math.sin(x * 0.05)) * 3);
+            const h = Math.max(3, base + wobble + ((Math.random() * 3) | 0));
+            for (let y = this.backdropRows - 1; y >= this.backdropRows - h; y--) {
+                this.backdropGrid[y * this.cols + x] = 1;
+            }
+        }
     }
     _step() {
         // Double buffer clear
@@ -108,6 +132,21 @@ export default class SandSim {
             for (let x = 0; x < this.cols; x++) {
                 if (!this.grid[this._idx(x, y)]) continue;
                 ctx.fillStyle = this.colors[(x + y) & 3];
+                ctx.fillRect(x * this.cell, topYWorld + y * this.cell, this.cell, this.cell);
+            }
+        }
+        ctx.restore();
+    }
+
+    drawBackdrop(ctx) {
+        const topYWorld = this.game.world.bounds.height - this.backdropRows * this.cell;
+        ctx.save();
+        ctx.translate(-this.game.camera.x, -this.game.camera.y);
+        ctx.globalAlpha = 1;
+        for (let y = 0; y < this.backdropRows; y++) {
+            for (let x = 0; x < this.cols; x++) {
+                if (!this.backdropGrid[y * this.cols + x]) continue;
+                ctx.fillStyle = this.backdropColors[(x + y) & 3];
                 ctx.fillRect(x * this.cell, topYWorld + y * this.cell, this.cell, this.cell);
             }
         }
