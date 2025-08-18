@@ -106,8 +106,8 @@ class World {
         const parallaxFactorMid = 0.3;
         const parallaxFactorNear = 0.6;
         
-        this.drawParallaxLayer(ctx, bgFar, camera, parallaxFactorFar, true);
-        this.drawParallaxLayer(ctx, bgMid, camera, parallaxFactorMid, true);
+        this.drawParallaxLayer(ctx, bgFar, camera, parallaxFactorFar);
+        this.drawParallaxLayer(ctx, bgMid, camera, parallaxFactorMid);
         
         // Draw scenery
         this.scenery.forEach(item => {
@@ -138,41 +138,30 @@ class World {
 
     }
 
-    drawParallaxLayer(ctx, image, camera, parallaxFactor, tile = false) {
+    drawParallaxLayer(ctx, image, camera, parallaxFactor) {
         if (!image || !image.width || !image.height) return;
 
-        if (tile) {
-            const pattern = ctx.createPattern(image, 'repeat');
-            ctx.save();
-            ctx.translate(camera.x * parallaxFactor, camera.y * parallaxFactor);
-            ctx.fillStyle = pattern;
-            // The drawn rectangle's coordinates are relative to the translated origin,
-            // so they need to be offset by the negative camera position to cover the screen.
-            ctx.fillRect(-camera.x * parallaxFactor, -camera.y * parallaxFactor, this.game.width, this.game.height);
-            ctx.restore();
+        const canvas = this.game.canvas;
+        const imgAspectRatio = image.width / image.height;
+        const canvasAspectRatio = canvas.width / canvas.height;
+
+        let drawWidth, drawHeight;
+
+        if (imgAspectRatio > canvasAspectRatio) {
+            // Image is wider than canvas, so height is the constraining dimension
+            drawHeight = canvas.height;
+            drawWidth = drawHeight * imgAspectRatio;
         } else {
-            const canvas = this.game.canvas;
-            const imgAspectRatio = image.width / image.height;
-            const canvasAspectRatio = canvas.width / canvas.height;
-
-            let drawWidth, drawHeight;
-
-            if (imgAspectRatio > canvasAspectRatio) {
-                // Image is wider than canvas, so height is the constraining dimension
-                drawHeight = canvas.height;
-                drawWidth = drawHeight * imgAspectRatio;
-            } else {
-                // Image is taller or same aspect ratio, so width is the constraining dimension
-                drawWidth = canvas.width;
-                drawHeight = drawWidth / imgAspectRatio;
-            }
-
-            // Center the image
-            const x = camera.x * parallaxFactor - (drawWidth - canvas.width) / 2;
-            const y = camera.y * parallaxFactor - (drawHeight - canvas.height) / 2;
-
-            ctx.drawImage(image, x, y, drawWidth, drawHeight);
+            // Image is taller or same aspect ratio, so width is the constraining dimension
+            drawWidth = canvas.width;
+            drawHeight = drawWidth / imgAspectRatio;
         }
+
+        // Center the image
+        const x = camera.x * parallaxFactor - (drawWidth - canvas.width) / 2;
+        const y = camera.y * parallaxFactor - (drawHeight - canvas.height) / 2;
+
+        ctx.drawImage(image, x, y, drawWidth, drawHeight);
     }
 }
 
