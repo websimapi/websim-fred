@@ -59,7 +59,7 @@ class World {
             const height = Math.random() * 100 + 75;
             this.backgroundEntities.far.push({
                 x: Math.random() * this.bounds.width,
-                y: this.bounds.height - (height / 2) - (Math.random() * 50),
+                y: this.bounds.height - (height / 2) - (Math.random() * 30),
                 image: this.game.assets.rock,
                 type: 'rock',
                 width: width,
@@ -76,7 +76,7 @@ class World {
             const height = Math.random() * 150 + 100;
             this.backgroundEntities.mid.push({
                 x: Math.random() * this.bounds.width,
-                y: this.bounds.height - (height / 2) - (Math.random() * 100),
+                y: this.bounds.height - (height / 2) - (Math.random() * 50),
                 image: this.game.assets[entityType],
                 type: entityType,
                 width: width,
@@ -93,7 +93,7 @@ class World {
             const height = Math.random() * 120 + 80;
             this.backgroundEntities.near.push({
                 x: Math.random() * this.bounds.width,
-                y: this.bounds.height - (height / 2) - (Math.random() * 150),
+                y: this.bounds.height - (height / 2) - (Math.random() * 70),
                 image: this.game.assets[entityType],
                 width: width,
                 height: height,

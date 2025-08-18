@@ -32,6 +32,7 @@ class Game {
             { name: 'dash', type: 'audio', src: 'dash.mp3' },
             { name: 'bump', type: 'audio', src: 'bump.mp3' },
             { name: 'ambient', type: 'audio', src: 'ambient.mp3', loop: true },
+            { name: 'swim_bubble', type: 'audio', src: 'swim_bubble.mp3' },
         ];
         this.assets = {};
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();

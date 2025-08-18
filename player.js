@@ -89,6 +89,9 @@ class Player {
              const backX = this.x - Math.cos(this.angle) * this.width/2;
              const backY = this.y - Math.sin(this.angle) * this.width/2;
              this.game.particleSystem.createParticle(backX, backY, 'bubble', 0.2, 0.5);
+             if (Math.random() > 0.95) { // Play sound occasionally
+                this.game.playSound('swim_bubble', Math.random() * 0.5 + 0.75);
+             }
         }
     }
 
