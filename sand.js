@@ -7,9 +7,8 @@ export default class SandSim {
         this._init();
     }
     _init() {
-        this.cols = Math.ceil(this.game.width / this.cell);
-        this.rows = Math.ceil(this.bandHeight / this.cell);
-        this.bandTop = this.game.height - this.bandHeight;
+        this.cols = Math.floor(this.game.world.bounds.width / this.cell);
+        this.rows = Math.floor(this.bandHeight / this.cell);
         this.grid = new Uint8Array(this.cols * this.rows);
         this.buffer = new Uint8Array(this.cols * this.rows);
         this.colors = this._makePalette();
@@ -68,10 +67,10 @@ export default class SandSim {
         // Swap
         const tmp = this.grid; this.grid = this.buffer; this.buffer = tmp;
     }
-    impulseAt(screenX, screenY, radiusPx, dirX = 0) {
-        const topY = this.game.height - this.rows * this.cell;
-        const cx = Math.floor(screenX / this.cell);
-        const cy = Math.floor((screenY - topY) / this.cell);
+    impulseAt(worldX, worldY, radiusPx, dirX = 0) {
+        const topYWorld = this.game.world.bounds.height - this.rows * this.cell;
+        const cx = Math.floor(worldX / this.cell);
+        const cy = Math.floor((worldY - topYWorld) / this.cell);
         const r = Math.max(1, Math.floor(radiusPx / this.cell));
         for (let y = cy - r; y <= cy + r; y++) {
             for (let x = cx - r; x <= cx + r; x++) {
@@ -86,34 +85,31 @@ export default class SandSim {
             }
         }
     }
-    update(_, player, camera) {
+    update(_, player) {
         // Player-sand interaction
-        const bandTop = this.bandTop;
-        const px = player.x - camera.x;
-        const py = player.y - camera.y;
+        const bandTopWorld = this.game.world.bounds.height - this.rows * this.cell;
+        const px = player.x, py = player.y;
         const pr = Math.max(player.width, player.height) * 0.4;
-        if (py + pr > bandTop - 4) {
+        if (py + pr > bandTopWorld - 4) {
             const speed = Math.hypot(player.vx, player.vy);
             const radius = Math.min(40, 12 + speed * 0.03);
-            this.impulseAt(px, Math.max(py, bandTop + 2), radius, Math.cos(player.angle));
+            this.impulseAt(px, Math.max(py, bandTopWorld + 2), radius, Math.cos(player.angle));
         }
         for (let i = 0; i < this.stepsPerFrame; i++) this._step();
     }
     draw(ctx) {
-        const topY = this.bandTop;
+        const topYWorld = this.game.world.bounds.height - this.rows * this.cell;
         ctx.save();
+        ctx.translate(-this.game.camera.x, -this.game.camera.y);
         ctx.globalAlpha = 0.9;
-        ctx.beginPath();
-        ctx.rect(0, topY, this.game.width, this.game.height - topY);
-        ctx.clip();
         ctx.fillStyle = 'rgba(230,215,170,0.25)';
-        ctx.fillRect(0, topY, this.game.width, this.game.height - topY);
+        ctx.fillRect(0, topYWorld, this.cols * this.cell, this.rows * this.cell);
         // Draw particles
         for (let y = 0; y < this.rows; y++) {
             for (let x = 0; x < this.cols; x++) {
                 if (!this.grid[this._idx(x, y)]) continue;
                 ctx.fillStyle = this.colors[(x + y) & 3];
-                ctx.fillRect(x * this.cell, topY + y * this.cell, this.cell, this.cell);
+                ctx.fillRect(x * this.cell, topYWorld + y * this.cell, this.cell, this.cell);
             }
         }
         ctx.restore();
