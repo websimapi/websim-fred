@@ -72,8 +72,8 @@ class World {
         for (let i = 0; i < 12; i++) {
             const entities = ['coral', 'seaweed', 'rock'];
             const entityType = entities[Math.floor(Math.random() * entities.length)];
-            const width = Math.random() * 120 + 80;
-            const height = Math.random() * 150 + 100;
+            const width = Math.random() * 140 + 120;
+            const height = Math.random() * 180 + 140;
             this.backgroundEntities.mid.push({
                 x: Math.random() * this.bounds.width,
                 y: (entityType === 'rock' || entityType === 'coral') ? 1800 : this.bounds.height - (height / 2) - (Math.random() * 50),
@@ -81,25 +81,36 @@ class World {
                 type: entityType,
                 width: width,
                 height: height,
-                alpha: 0.5
+                alpha: entityType === 'rock' ? 1 : 0.6
             });
         }
         
         // Near background entities
-        for (let i = 0; i < 25; i++) {
+        for (let i = 0; i < 30; i++) {
             const entities = ['coral', 'seaweed', 'rock'];
             const entityType = entities[Math.floor(Math.random() * entities.length)];
-            const width = Math.random() * 60 + 100;
-            const height = Math.random() * 80 + 140;
+            const width = Math.random() * 100 + 140;
+            const height = Math.random() * 120 + 180;
             this.backgroundEntities.near.push({
                 x: Math.random() * this.bounds.width,
                 y: (entityType === 'rock' || entityType === 'coral') ? 1800 : this.bounds.height - (height / 2) - (Math.random() * 70),
                 image: this.game.assets[entityType],
+                type: entityType,
                 width: width,
                 height: height,
-                alpha: entityType === 'rock' ? 1 : 0.8
+                alpha: entityType === 'rock' ? 1 : 0.9
             });
         }
+
+        // Ensure at least two visible landmark rocks near the bottom
+        this.backgroundEntities.near.push({
+            x: 1200, y: 1800, image: this.game.assets.rock, type: 'rock',
+            width: 320, height: 200, alpha: 1
+        });
+        this.backgroundEntities.near.push({
+            x: 1800, y: 1800, image: this.game.assets.coral, type: 'coral',
+            width: 260, height: 220, alpha: 0.9
+        });
     }
 
     update(deltaTime, player) {
@@ -193,8 +204,9 @@ class World {
         // Draw near background entities
         ctx.save();
         ctx.translate(-camera.x * parallaxFactorNear, -camera.y * parallaxFactorNear);
+        ctx.globalAlpha = 1; // ensure full opacity baseline
         this.backgroundEntities.near.forEach(entity => {
-            ctx.globalAlpha = (entity.type === 'rock') ? 1 : entity.alpha;
+            ctx.globalAlpha = entity.alpha;
             ctx.drawImage(entity.image, entity.x - entity.width / 2, entity.y - entity.height / 2, entity.width, entity.height);
         });
         ctx.restore();
