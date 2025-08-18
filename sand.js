@@ -5,6 +5,7 @@ export default class SandSim {
         this.bandHeight = bandHeight;
         this.stepsPerFrame = 2;
         this._init();
+        this._lastGrid = null;
     }
     _init() {
         this.cols = Math.floor(this.game.world.bounds.width / this.cell);
@@ -108,6 +109,8 @@ export default class SandSim {
                 }
             }
         }
+        // Push into backdrop where we carve
+        this._backdropAddAt(worldX, worldY, radiusPx * 1.1, 0.35);
     }
     update(_, player) {
         // Player-sand interaction
@@ -119,8 +122,11 @@ export default class SandSim {
             const radius = Math.min(40, 12 + speed * 0.03);
             this.impulseAt(px, Math.max(py, bandTopWorld + 2), radius, Math.cos(player.angle));
         }
+        // Track previous state for backdrop sync
+        this._lastGrid = this.grid.slice();
         for (let i = 0; i < this.stepsPerFrame; i++) this._step();
         this._applyNoSandMask();
+        this._syncBackdropFromFront(this._lastGrid);
     }
     draw(ctx) {
         const topYWorld = this.game.world.bounds.height - this.rows * this.cell;
@@ -167,6 +173,57 @@ export default class SandSim {
             for (let x = x0; x <= x1; x++) {
                 for (let y = 0; y <= Math.min(this.rows - 1, aboveEnd); y++) this.grid[this._idx(x, y)] = 0;
                 for (let y = Math.max(0, bodyTopRow); y <= Math.min(this.rows - 1, bodyBotRow); y++) this.grid[this._idx(x, y)] = 0;
+            }
+        }
+    }
+
+    // Map world to backdrop cell coords
+    _worldToBackdrop(wx, wy) {
+        const top = this.game.world.bounds.height - this.backdropRows * this.cell;
+        return { bx: Math.floor(wx / this.cell), by: Math.floor((wy - top) / this.cell) };
+    }
+
+    // Add to backdrop within a radius (probabilistic)
+    _backdropAddAt(wx, wy, rPx, prob = 0.5) {
+        const { bx, by } = this._worldToBackdrop(wx, wy);
+        const r = Math.max(1, Math.floor(rPx / this.cell));
+        for (let y = by - r; y <= by + r; y++) {
+            for (let x = bx - r; x <= bx + r; x++) {
+                if (x < 0 || x >= this.cols || y < 0 || y >= this.backdropRows) continue;
+                const dx = x - bx, dy = y - by;
+                if (dx * dx + dy * dy <= r * r && Math.random() < prob) {
+                    this.backdropGrid[y * this.cols + x] = 1;
+                }
+            }
+        }
+    }
+
+    // Remove from backdrop within a radius (probabilistic)
+    _backdropRemoveAt(wx, wy, rPx, prob = 0.6) {
+        const { bx, by } = this._worldToBackdrop(wx, wy);
+        const r = Math.max(1, Math.floor(rPx / this.cell));
+        for (let y = by - r; y <= by + r; y++) {
+            for (let x = bx - r; x <= bx + r; x++) {
+                if (x < 0 || x >= this.cols || y < 0 || y >= this.backdropRows) continue;
+                const dx = x - bx, dy = y - by;
+                if (dx * dx + dy * dy <= r * r && Math.random() < prob) {
+                    this.backdropGrid[y * this.cols + x] = 0;
+                }
+            }
+        }
+    }
+
+    _syncBackdropFromFront(prev) {
+        // Pull from backdrop where new sand appears in the front
+        const topYWorld = this.game.world.bounds.height - this.rows * this.cell;
+        for (let y = 0; y < this.rows; y++) {
+            for (let x = 0; x < this.cols; x++) {
+                const i = y * this.cols + x;
+                if (!prev[i] && this.grid[i]) {
+                    const wx = x * this.cell + this.cell * 0.5;
+                    const wy = topYWorld + y * this.cell + this.cell * 0.5;
+                    this._backdropRemoveAt(wx, wy, this.cell * 1.8, 0.7);
+                }
             }
         }
     }
