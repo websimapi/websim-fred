@@ -86,18 +86,18 @@ class World {
         }
         
         // Near background entities
-        for (let i = 0; i < 15; i++) {
-            const entities = ['coral', 'seaweed'];
+        for (let i = 0; i < 25; i++) {
+            const entities = ['coral', 'seaweed', 'rock'];
             const entityType = entities[Math.floor(Math.random() * entities.length)];
-            const width = Math.random() * 80 + 60;
-            const height = Math.random() * 120 + 80;
+            const width = Math.random() * 60 + 100;
+            const height = Math.random() * 80 + 140;
             this.backgroundEntities.near.push({
                 x: Math.random() * this.bounds.width,
-                y: (entityType === 'coral') ? 1800 : this.bounds.height - (height / 2) - (Math.random() * 70),
+                y: (entityType === 'rock' || entityType === 'coral') ? 1800 : this.bounds.height - (height / 2) - (Math.random() * 70),
                 image: this.game.assets[entityType],
                 width: width,
                 height: height,
-                alpha: 0.7
+                alpha: entityType === 'rock' ? 1 : 0.8
             });
         }
     }
@@ -194,7 +194,7 @@ class World {
         ctx.save();
         ctx.translate(-camera.x * parallaxFactorNear, -camera.y * parallaxFactorNear);
         this.backgroundEntities.near.forEach(entity => {
-            ctx.globalAlpha = entity.alpha;
+            ctx.globalAlpha = (entity.type === 'rock') ? 1 : entity.alpha;
             ctx.drawImage(entity.image, entity.x - entity.width / 2, entity.y - entity.height / 2, entity.width, entity.height);
         });
         ctx.restore();
