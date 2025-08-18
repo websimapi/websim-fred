@@ -4,6 +4,7 @@ import InputHandler from 'input';
 import { ParticleSystem } from 'particles';
 import { UI } from 'ui';
 import Camera from 'camera';
+import SandSim from 'sand';
 
 class Game {
     constructor(canvas, loadingScreen) {
@@ -40,6 +41,7 @@ class Game {
         this.lastTime = 0;
         this.camera = { x: 0, y: 0 };
         this.debug = { showCoords: false };
+        this.sand = null;
     }
 
     async loadAssets() {
@@ -106,12 +108,14 @@ class Game {
         this.world = new World(this);
         this.ui = new UI(this);
         this.camera = new Camera(this);
+        this.sand = new SandSim(this);
 
         window.addEventListener('resize', () => {
             this.width = window.innerWidth;
             this.height = window.innerHeight;
             this.canvas.width = this.width;
             this.canvas.height = this.height;
+            if (this.sand) this.sand.onResize(this.width, this.height);
         });
         
         if (this.audioContext.state === 'suspended') {
@@ -152,6 +156,7 @@ class Game {
         this.world.update(deltaTime, this.player);
         this.particleSystem.update(deltaTime);
         this.camera.update(this.player);
+        if (this.sand) this.sand.update(deltaTime, this.player, this.camera);
     }
 
     draw() {
@@ -169,7 +174,7 @@ class Game {
         this.ctx.restore();
 
         this.world.drawForeground(this.ctx, this.camera);
-        
+        if (this.sand) this.sand.draw(this.ctx);
         this.ui.draw(this.ctx);
     }
 }
