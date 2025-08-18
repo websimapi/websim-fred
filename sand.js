@@ -7,8 +7,9 @@ export default class SandSim {
         this._init();
     }
     _init() {
-        this.cols = Math.floor(this.game.width / this.cell);
-        this.rows = Math.floor(this.bandHeight / this.cell);
+        this.cols = Math.ceil(this.game.width / this.cell);
+        this.rows = Math.ceil(this.bandHeight / this.cell);
+        this.bandTop = this.game.height - this.bandHeight;
         this.grid = new Uint8Array(this.cols * this.rows);
         this.buffer = new Uint8Array(this.cols * this.rows);
         this.colors = this._makePalette();
@@ -87,7 +88,7 @@ export default class SandSim {
     }
     update(_, player, camera) {
         // Player-sand interaction
-        const bandTop = this.game.height - this.rows * this.cell;
+        const bandTop = this.bandTop;
         const px = player.x - camera.x;
         const py = player.y - camera.y;
         const pr = Math.max(player.width, player.height) * 0.4;
@@ -99,12 +100,14 @@ export default class SandSim {
         for (let i = 0; i < this.stepsPerFrame; i++) this._step();
     }
     draw(ctx) {
-        const topY = this.game.height - this.rows * this.cell;
-        // Subtle band shading
+        const topY = this.bandTop;
         ctx.save();
         ctx.globalAlpha = 0.9;
+        ctx.beginPath();
+        ctx.rect(0, topY, this.game.width, this.game.height - topY);
+        ctx.clip();
         ctx.fillStyle = 'rgba(230,215,170,0.25)';
-        ctx.fillRect(0, topY, this.cols * this.cell, this.rows * this.cell);
+        ctx.fillRect(0, topY, this.game.width, this.game.height - topY);
         // Draw particles
         for (let y = 0; y < this.rows; y++) {
             for (let x = 0; x < this.cols; x++) {
