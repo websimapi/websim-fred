@@ -284,4 +284,19 @@ export default class SandSim {
             }
         return false;
     }
+
+    // Add: cover a small area in the back layer with sand (used to hide items)
+    coverBackAt(worldX, worldY, radiusPx = 16) {
+        const top = this.game.world.bounds.height - this.backdropRows * this.cell;
+        const cx = Math.floor(worldX / this.cell);
+        const cy = Math.floor((worldY - top) / this.cell);
+        const r = Math.max(1, Math.floor(radiusPx / this.cell));
+        for (let y = cy - r; y <= cy + r; y++) {
+            for (let x = cx - r; x <= cx + r; x++) {
+                if (x < 0 || x >= this.cols || y < 0 || y >= this.backdropRows) continue;
+                const dx = x - cx, dy = y - cy;
+                if (dx*dx + dy*dy <= r*r) this.backdropGrid[y * this.cols + x] = 1;
+            }
+        }
+    }
 }
