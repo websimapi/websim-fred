@@ -19,6 +19,7 @@ export default class SandSim {
         this.backdropBuffer = new Uint8Array(this.cols * this.backdropRows);
         this.backdropColors = this._makeDarkerPalette();
         this._seedBackdrop();
+        this.backMinProfile = this._computeBackMinProfile(); // per-column min fill profile
     }
     onResize() { this._init(); }
     _idx(x, y) { return y * this.cols + x; }
@@ -108,29 +109,38 @@ export default class SandSim {
         }
         const t = this.backdropGrid; this.backdropGrid = this.backdropBuffer; this.backdropBuffer = t;
     }
-    impulseAt(worldX, worldY, radiusPx, dirX = 0, playerY = null) {
+    _computeBackMinProfile() {
+        const profile = new Float32Array(this.cols);
+        for (let x = 0; x < this.cols; x++) {
+            const n = 0.5 + 0.1 * Math.sin(x * 0.08) + 0.05 * Math.sin(x * 0.013 + 1.7);
+            profile[x] = Math.min(0.7, Math.max(0.35, n));
+        }
+        return profile;
+    }
+    impulseAt(worldX, worldY, radiusPx, dirX = 0, playerY = null, speed = 0) {
         const topYWorld = this.game.world.bounds.height - this.rows * this.cell;
         const cx = Math.floor(worldX / this.cell);
         const cy = Math.floor((worldY - topYWorld) / this.cell);
         const r = Math.max(1, Math.floor(radiusPx / this.cell));
-        const minBackFill = Math.floor(this.backdropRows * 0.5);
-        const supplyFront = (x, yPref) => this._removeFromBackTop(x, minBackFill) && this._dropToFrontNear(x, yPref);
+        const lowSpeed = speed < 40; // pause transfer when nearly still
+        const supplyFront = (x, yPref) => {
+            if (lowSpeed) return false;
+            const xi = Math.max(0, Math.min(this.cols - 1, x));
+            const minFill = Math.floor(this.backdropRows * this.backMinProfile[xi]);
+            return this._removeFromBackTop(xi, minFill) && this._dropToFrontNear(xi, yPref);
+        };
         for (let y = cy - r; y <= cy + r; y++) {
             for (let x = cx - r; x <= cx + r; x++) {
                 if (!this._inBounds(x, y)) continue;
                 const dx = x - cx, dy = y - cy;
                 if (dx * dx + dy * dy > r * r) continue;
-                // If front has sand here: remove from front, add to back (mass conserved)
+                if (lowSpeed) continue; // no push/pull at low speeds
                 if (this.grid[this._idx(x, y)]) {
                     this.grid[this._idx(x, y)] = 0;
                     this._addToBackTop(x);
                 } else {
-                    // Try to pull one grain from back into front near this spot
                     supplyFront(x, y);
-                    // Gentle sideways bias only if we have supply
-                    if (Math.random() < 0.3 && supplyFront(x + Math.sign(dirX), y)) {
-                        // placed via supplyFront
-                    }
+                    if (Math.random() < 0.3 && supplyFront(x + Math.sign(dirX), y)) {}
                 }
             }
         }
@@ -174,7 +184,7 @@ export default class SandSim {
         if (py + pr > bandTopWorld - 4) {
             const speed = Math.hypot(player.vx, player.vy);
             const radius = Math.min(40, 12 + speed * 0.03);
-            this.impulseAt(px, Math.max(py, bandTopWorld + 2), radius, Math.cos(player.angle), py);
+            if (speed > 40) this.impulseAt(px, Math.max(py, bandTopWorld + 2), radius, Math.cos(player.angle), py, speed);
         }
         for (let i = 0; i < this.stepsPerFrame; i++) this._step();
         for (let i = 0; i < this.backdropStepsPerFrame; i++) this._stepBackdrop();
