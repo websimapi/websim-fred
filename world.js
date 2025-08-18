@@ -59,6 +59,7 @@ class World {
                 x: Math.random() * this.bounds.width,
                 y: Math.random() * this.bounds.height,
                 image: this.game.assets.rock,
+                type: 'rock',
                 width: Math.random() * 200 + 150,
                 height: Math.random() * 100 + 75,
                 alpha: 0.3
@@ -73,6 +74,7 @@ class World {
                 x: Math.random() * this.bounds.width,
                 y: Math.random() * this.bounds.height,
                 image: this.game.assets[entityType],
+                type: entityType,
                 width: Math.random() * 120 + 80,
                 height: Math.random() * 150 + 100,
                 alpha: 0.5
@@ -146,7 +148,11 @@ class World {
         ctx.save();
         ctx.translate(-camera.x * parallaxFactorFar, -camera.y * parallaxFactorFar);
         this.backgroundEntities.far.forEach(entity => {
-            ctx.globalAlpha = entity.alpha;
+            if (entity.type === 'rock') {
+                ctx.globalAlpha = 1;
+            } else {
+                ctx.globalAlpha = entity.alpha;
+            }
             ctx.drawImage(entity.image, entity.x - entity.width / 2, entity.y - entity.height / 2, entity.width, entity.height);
         });
         ctx.restore();
@@ -159,7 +165,11 @@ class World {
         ctx.save();
         ctx.translate(-camera.x * parallaxFactorMid, -camera.y * parallaxFactorMid);
         this.backgroundEntities.mid.forEach(entity => {
-            ctx.globalAlpha = entity.alpha;
+            if (entity.type === 'rock') {
+                ctx.globalAlpha = 1;
+            } else {
+                ctx.globalAlpha = entity.alpha;
+            }
             ctx.drawImage(entity.image, entity.x - entity.width / 2, entity.y - entity.height / 2, entity.width, entity.height);
         });
         ctx.restore();
