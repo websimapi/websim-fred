@@ -12,6 +12,7 @@ class World {
             mid: [],
             near: []
         };
+        this.scenery = []; // new in-world scenery layer
         this.generate();
     }
 
@@ -47,6 +48,22 @@ class World {
 
         // Add NPCs
         this.npcs.push(new Crab(800, this.bounds.height - 100, this.game));
+
+        // Spawn rocks and coral at same level as crab
+        const crabLevelY = this.bounds.height - 100;
+        for (let i = 0; i < 12; i++) {
+            const isRock = Math.random() < 0.5;
+            const img = isRock ? this.game.assets.rock : this.game.assets.coral;
+            const w = Math.random() * 140 + 200;
+            const h = Math.random() * 120 + 160;
+            this.scenery.push({
+                x: Math.random() * this.bounds.width,
+                y: crabLevelY,
+                image: img,
+                width: w,
+                height: h
+            });
+        }
         
         // Generate background entities
         this.generateBackgroundEntities();
@@ -213,6 +230,11 @@ class World {
     }
 
     draw(ctx, camera) {
+        // Draw in-world scenery (behind NPCs, in front of backgrounds)
+        this.scenery.forEach(s => {
+            ctx.drawImage(s.image, s.x - s.width / 2, s.y - s.height / 2, s.width, s.height);
+        });
+
         // Draw collectibles
         this.collectibles.forEach(item => {
             if (!item.collected) {
