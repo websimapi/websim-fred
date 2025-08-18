@@ -79,26 +79,10 @@ class Player {
         const currentVelocity = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
         this.swimCycle += (currentVelocity / 100) * deltaTime;
         
-        // World boundary pushback
+        // Boundaries
         const worldBounds = this.game.world.bounds;
-        const pushbackForce = 500;
-        const boundaryMargin = 50; // How close to edge before push starts
-        
-        if (this.x < boundaryMargin) {
-            this.vx += (boundaryMargin - this.x) / boundaryMargin * pushbackForce * deltaTime;
-        } else if (this.x > worldBounds.width - boundaryMargin) {
-            this.vx -= (this.x - (worldBounds.width - boundaryMargin)) / boundaryMargin * pushbackForce * deltaTime;
-        }
-        
-        if (this.y < boundaryMargin) {
-            this.vy += (boundaryMargin - this.y) / boundaryMargin * pushbackForce * deltaTime;
-        } else if (this.y > worldBounds.height - boundaryMargin) {
-            this.vy -= (this.y - (worldBounds.height - boundaryMargin)) / boundaryMargin * pushbackForce * deltaTime;
-        }
-
-        // Hard boundaries (in case push isn't enough)
-        this.x = Math.max(0, Math.min(this.x, worldBounds.width));
-        this.y = Math.max(0, Math.min(this.y, worldBounds.height));
+        this.x = Math.max(this.width/2, Math.min(this.x, worldBounds.width - this.width/2));
+        this.y = Math.max(this.height/2, Math.min(this.y, worldBounds.height - this.height/2));
 
         // Emit bubble particles when moving
         if (currentVelocity > 20 && Math.random() > 0.5) {

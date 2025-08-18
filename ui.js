@@ -3,39 +3,14 @@ export class UI {
         this.game = game;
         this.pearlImage = game.assets.pearl;
         this.activeNPC = null;
-        this.dialogueBox = document.getElementById('dialogue-box');
-        this.dialogueText = document.getElementById('dialogue-text');
     }
     
     setActiveNPC(npc) {
         this.activeNPC = npc;
-        if (npc && npc.currentDialogue) {
-            this.showDialogue(npc.currentDialogue);
-        }
     }
     
     clearActiveNPC() {
         this.activeNPC = null;
-        this.hideDialogue();
-    }
-
-    showDialogue(text) {
-        this.dialogueText.textContent = text;
-        this.dialogueBox.classList.remove('hidden');
-    }
-
-    hideDialogue() {
-        this.dialogueBox.classList.add('hidden');
-    }
-
-    update(deltaTime) {
-        if (this.activeNPC && this.activeNPC.currentDialogue) {
-            if (this.dialogueText.textContent !== this.activeNPC.currentDialogue) {
-                 this.showDialogue(this.activeNPC.currentDialogue);
-            }
-        } else if (!this.activeNPC && !this.dialogueBox.classList.contains('hidden')) {
-            this.hideDialogue();
-        }
     }
 
     draw(ctx) {
@@ -107,3 +82,4 @@ export class UI {
         ctx.fillText(line, boxX + boxWidth / 2, y);
     }
 }
+

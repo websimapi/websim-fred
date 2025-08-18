@@ -10,8 +10,8 @@ class Game {
         this.canvas = canvas;
         this.loadingScreen = loadingScreen;
         this.ctx = canvas.getContext('2d');
-        this.width = 1280;
-        this.height = 720;
+        this.width = window.innerWidth;
+        this.height = window.innerHeight;
         this.canvas.width = this.width;
         this.canvas.height = this.height;
 
@@ -105,6 +105,13 @@ class Game {
         this.ui = new UI(this);
         this.camera = new Camera(this);
 
+        window.addEventListener('resize', () => {
+            this.width = window.innerWidth;
+            this.height = window.innerHeight;
+            this.canvas.width = this.width;
+            this.canvas.height = this.height;
+        });
+        
         if (this.audioContext.state === 'suspended') {
             const resumeAudio = () => {
                 this.audioContext.resume();
@@ -138,7 +145,6 @@ class Game {
         this.world.update(deltaTime, this.player);
         this.particleSystem.update(deltaTime);
         this.camera.update(this.player);
-        this.ui.update(deltaTime);
     }
 
     draw() {
@@ -157,21 +163,7 @@ class Game {
 
         this.world.drawForeground(this.ctx, this.camera);
         
-        this.drawFog();
         this.ui.draw(this.ctx);
-    }
-
-    drawFog() {
-        const gradient = this.ctx.createRadialGradient(
-            this.width / 2, this.height / 2, this.width / 2.5, // inner circle
-            this.width / 2, this.height / 2, this.width / 2  // outer circle
-        );
-        gradient.addColorStop(0, 'rgba(0, 15, 30, 0)');
-        gradient.addColorStop(0.8, 'rgba(0, 15, 30, 0.4)');
-        gradient.addColorStop(1, 'rgba(0, 15, 30, 0.8)');
-        
-        this.ctx.fillStyle = gradient;
-        this.ctx.fillRect(0, 0, this.width, this.height);
     }
 }
 
