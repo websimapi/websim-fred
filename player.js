@@ -67,10 +67,12 @@ class Player {
         this.x += this.vx * deltaTime;
         this.y += this.vy * deltaTime;
 
-        // Update angle to match velocity
-        if (Math.abs(this.vx) > 0.1 || Math.abs(this.vy) > 0.1) {
-            this.angle = Math.atan2(this.vy, this.vx);
-        }
+        // Update angle to face the mouse cursor
+        const playerScreenX = this.x - this.game.camera.x;
+        const playerScreenY = this.y - this.game.camera.y;
+        const mouseDx = input.mouse.x - playerScreenX;
+        const mouseDy = input.mouse.y - playerScreenY;
+        this.angle = Math.atan2(mouseDy, mouseDx);
 
         // Update swim animation cycle based on speed
         const currentVelocity = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
@@ -92,19 +94,19 @@ class Player {
     draw(ctx) {
         ctx.save();
         ctx.translate(this.x, this.y);
-
-        // Rotate to match the direction of movement. This removes the flipping logic.
         ctx.rotate(this.angle);
 
         // --- Swim Animation ---
         const swimBend = Math.sin(this.swimCycle * 20) * 0.1; // Amount of bend
         
-        // Apply the bend for a more dynamic swimming look
+        // Flip image if mouse is on the left side of the player
+        if (this.angle > Math.PI / 2 || this.angle < -Math.PI / 2) {
+             ctx.scale(1, -1); // Flip vertically
+        }
+        
+        // Apply the bend
         ctx.scale(1 + swimBend, 1 - swimBend);
 
-        // The image is drawn centered on the player's coordinates.
-        // Since the image naturally faces right (angle 0), rotating by this.angle
-        // will correctly orient it in the direction of movement.
         ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
         ctx.restore();
     }
