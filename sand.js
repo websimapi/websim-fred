@@ -96,6 +96,7 @@ export default class SandSim {
             this.impulseAt(px, Math.max(py, bandTopWorld + 2), radius, Math.cos(player.angle));
         }
         for (let i = 0; i < this.stepsPerFrame; i++) this._step();
+        this._applyNoSandMask();
     }
     draw(ctx) {
         const topYWorld = this.game.world.bounds.height - this.rows * this.cell;
@@ -111,5 +112,23 @@ export default class SandSim {
             }
         }
         ctx.restore();
+    }
+
+    _applyNoSandMask() {
+        const topYWorld = this.game.world.bounds.height - this.rows * this.cell;
+        const npcs = (this.game.world && this.game.world.npcs) || [];
+        for (const n of npcs) {
+            if (!n.noSand) continue;
+            const marginPx = 16;
+            const x0 = Math.max(0, Math.floor((n.x - n.width / 2 - marginPx) / this.cell));
+            const x1 = Math.min(this.cols - 1, Math.floor((n.x + n.width / 2 + marginPx) / this.cell));
+            const bodyTopRow = Math.floor((n.y - n.height / 2 - topYWorld) / this.cell);
+            const bodyBotRow = Math.floor((n.y + n.height / 2 - topYWorld) / this.cell);
+            const aboveEnd = Math.max(0, bodyTopRow); // clear anything above the crab within the sand band
+            for (let x = x0; x <= x1; x++) {
+                for (let y = 0; y <= Math.min(this.rows - 1, aboveEnd); y++) this.grid[this._idx(x, y)] = 0;
+                for (let y = Math.max(0, bodyTopRow); y <= Math.min(this.rows - 1, bodyBotRow); y++) this.grid[this._idx(x, y)] = 0;
+            }
+        }
     }
 }

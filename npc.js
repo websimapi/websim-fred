@@ -41,6 +41,7 @@ export class NPC {
 export class Crab extends NPC {
     constructor(x, y, game) {
         super(x, y, game, game.assets.crab, 100, 70);
+        this.noSand = true;
         this.quest = {
             id: 'pearl_collector',
             pearls_needed: 5,
@@ -63,4 +64,3 @@ export class Crab extends NPC {
         }
     }
 }
-
