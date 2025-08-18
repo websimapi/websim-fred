@@ -146,6 +146,7 @@ export default class SandSim {
         this._applyNoSandMask();
         this._syncBackdropFromFront(this._lastGrid);
         for (let i = 0; i < this.backdropStepsPerFrame; i++) this._stepBackdrop();
+        this._enforceMinColumnHeights();
     }
     draw(ctx) {
         const topYWorld = this.game.world.bounds.height - this.rows * this.cell;
@@ -233,17 +234,24 @@ export default class SandSim {
     }
 
     _syncBackdropFromFront(prev) {
-        // Pull from backdrop where new sand appears in the front
         const topYWorld = this.game.world.bounds.height - this.rows * this.cell;
         for (let y = 0; y < this.rows; y++) {
             for (let x = 0; x < this.cols; x++) {
                 const i = y * this.cols + x;
                 if (!prev[i] && this.grid[i]) {
-                    const wx = x * this.cell + this.cell * 0.5;
-                    const wy = topYWorld + y * this.cell + this.cell * 0.5;
-                    this._backdropRemoveAt(wx, wy, this.cell * 1.8, 0.7);
+                    const wx = x * this.cell + this.cell * 0.5, wy = topYWorld + y * this.cell + this.cell * 0.5;
+                    this._backdropAddAt(wx, wy, this.cell * 1.8, 0.7);
                 }
             }
+        }
+    }
+
+    _enforceMinColumnHeights() {
+        for (let x = 0; x < this.cols; x++) {
+            let f = 0, b = 0;
+            for (let y = this.rows - 1; y >= 0; y--) if (this.grid[this._idx(x, y)]) f++;
+            for (let y = this.backdropRows - 1; y >= 0; y--) if (this.backdropGrid[this._idxB(x, y)]) b++;
+            if (b < f) for (let k = 0; k < f; k++) this.backdropGrid[this._idxB(x, this.backdropRows - 1 - k)] = 1;
         }
     }
 }
