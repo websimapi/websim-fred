@@ -24,6 +24,8 @@ class Game {
             { name: 'jellyfish', type: 'image', src: 'jellyfish.png' },
             { name: 'bubble', type: 'image', src: 'bubble.png' },
             { name: 'sparkle', type: 'image', src: 'sparkle.png' },
+            { name: 'coral', type: 'image', src: 'coral.png' },
+            { name: 'seaweed', type: 'image', src: 'seaweed.png' },
             { name: 'collect', type: 'audio', src: 'collect.mp3' },
             { name: 'dash', type: 'audio', src: 'dash.mp3' },
             { name: 'bump', type: 'audio', src: 'bump.mp3' },
