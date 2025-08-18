@@ -59,7 +59,7 @@ class World {
             const height = Math.random() * 100 + 75;
             this.backgroundEntities.far.push({
                 x: Math.random() * this.bounds.width,
-                y: this.bounds.height - (height / 2),
+                y: this.bounds.height - (height / 2) - (Math.random() * 50),
                 image: this.game.assets.rock,
                 type: 'rock',
                 width: width,
@@ -74,15 +74,9 @@ class World {
             const entityType = entities[Math.floor(Math.random() * entities.length)];
             const width = Math.random() * 120 + 80;
             const height = Math.random() * 150 + 100;
-            let yPos = Math.random() * this.bounds.height;
-
-            if (entityType === 'rock') {
-                yPos = this.bounds.height - height / 2;
-            }
-            
             this.backgroundEntities.mid.push({
                 x: Math.random() * this.bounds.width,
-                y: yPos,
+                y: this.bounds.height - (height / 2) - (Math.random() * 100),
                 image: this.game.assets[entityType],
                 type: entityType,
                 width: width,
@@ -95,12 +89,14 @@ class World {
         for (let i = 0; i < 15; i++) {
             const entities = ['coral', 'seaweed'];
             const entityType = entities[Math.floor(Math.random() * entities.length)];
+            const width = Math.random() * 80 + 60;
+            const height = Math.random() * 120 + 80;
             this.backgroundEntities.near.push({
                 x: Math.random() * this.bounds.width,
-                y: Math.random() * this.bounds.height,
+                y: this.bounds.height - (height / 2) - (Math.random() * 150),
                 image: this.game.assets[entityType],
-                width: Math.random() * 80 + 60,
-                height: Math.random() * 120 + 80,
+                width: width,
+                height: height,
                 alpha: 0.7
             });
         }
