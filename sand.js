@@ -4,6 +4,7 @@ export default class SandSim {
         this.cell = cell;
         this.bandHeight = bandHeight;
         this.stepsPerFrame = 2;
+        this.backdropStepsPerFrame = 2;
         this._init();
     }
     _init() {
@@ -15,6 +16,7 @@ export default class SandSim {
         this._seedBed();
         this.backdropRows = this.rows * 2;
         this.backdropGrid = new Uint8Array(this.cols * this.backdropRows);
+        this.backdropBuffer = new Uint8Array(this.cols * this.backdropRows);
         this.backdropColors = this._makeDarkerPalette();
         this._seedBackdrop();
     }
@@ -91,71 +93,78 @@ export default class SandSim {
         // Swap
         const tmp = this.grid; this.grid = this.buffer; this.buffer = tmp;
     }
+    _stepBackdrop() {
+        this.backdropBuffer.fill(0);
+        for (let y = this.backdropRows - 1; y >= 0; y--) for (let x = 0; x < this.cols; x++) {
+            const i = y * this.cols + x;
+            if (!this.backdropGrid[i]) continue;
+            const below = y + 1 < this.backdropRows ? i + this.cols : -1;
+            if (below >= 0 && !this.backdropGrid[below] && !this.backdropBuffer[below]) { this.backdropBuffer[below] = 1; continue; }
+            const dir = Math.random() < 0.5 ? -1 : 1, nx = x + dir, ny = y + 1;
+            const i1 = ny * this.cols + nx, i2 = ny * this.cols + (x - dir);
+            if (nx >= 0 && nx < this.cols && ny < this.backdropRows && !this.backdropGrid[i1] && !this.backdropBuffer[i1]) this.backdropBuffer[i1] = 1;
+            else if (x - dir >= 0 && x - dir < this.cols && ny < this.backdropRows && !this.backdropGrid[i2] && !this.backdropBuffer[i2]) this.backdropBuffer[i2] = 1;
+            else this.backdropBuffer[i] = 1;
+        }
+        const t = this.backdropGrid; this.backdropGrid = this.backdropBuffer; this.backdropBuffer = t;
+    }
     impulseAt(worldX, worldY, radiusPx, dirX = 0, playerY = null) {
         const topYWorld = this.game.world.bounds.height - this.rows * this.cell;
-        const backTopYWorld = this.game.world.bounds.height - this.backdropRows * this.cell;
-        const halfBackYWorld = backTopYWorld + (this.backdropRows * this.cell) * 0.5;
-        const pushingBack = playerY != null && playerY > halfBackYWorld;
-        const minBackFill = Math.floor(this.backdropRows * 0.5);
         const cx = Math.floor(worldX / this.cell);
         const cy = Math.floor((worldY - topYWorld) / this.cell);
         const r = Math.max(1, Math.floor(radiusPx / this.cell));
-        const backIdx = (x, y) => y * this.cols + x;
-        const frontIdx = (x, y) => y * this.cols + x;
-        const backColFill = (x) => {
-            let cnt = 0;
-            for (let y = this.backdropRows - 1; y >= 0; y--) {
-                if (this.backdropGrid[backIdx(x, y)]) cnt++; else break;
-            }
-            return cnt;
-        };
-        const removeFromBackTop = (x) => {
-            let fill = backColFill(x);
-            if (fill <= minBackFill) return false;
-            const topY = this.backdropRows - fill;
-            this.backdropGrid[backIdx(x, topY)] = 0;
-            return true;
-        };
-        const addToBackTop = (x) => {
-            let fill = backColFill(x);
-            if (fill >= this.backdropRows) return false;
-            const newTopY = this.backdropRows - fill - 1;
-            this.backdropGrid[backIdx(x, newTopY)] = 1;
-            return true;
-        };
-        const dropToFrontNear = (x, yPref) => {
-            // try downward first
-            for (let y = Math.min(this.rows - 1, yPref + 2); y >= 0; y--) {
-                if (!this._inBounds(x, y)) continue;
-                if (!this.grid[frontIdx(x, y)]) { this.grid[frontIdx(x, y)] = 1; return true; }
-            }
-            // then upward search
-            for (let y = Math.max(0, yPref - 2); y < this.rows; y++) {
-                if (!this.grid[frontIdx(x, y)]) { this.grid[frontIdx(x, y)] = 1; return true; }
-            }
-            return false;
-        };
+        const minBackFill = Math.floor(this.backdropRows * 0.5);
+        const supplyFront = (x, yPref) => this._removeFromBackTop(x, minBackFill) && this._dropToFrontNear(x, yPref);
         for (let y = cy - r; y <= cy + r; y++) {
             for (let x = cx - r; x <= cx + r; x++) {
                 if (!this._inBounds(x, y)) continue;
                 const dx = x - cx, dy = y - cy;
-                if (dx * dx + dy * dy <= r * r) {
-                    // Carve a pocket in front
-                    if (this.grid[this._idx(x, y)]) {
-                        this.grid[this._idx(x, y)] = 0;
-                        // Push carved sand back if player is deep
-                        if (pushingBack) addToBackTop(x);
-                    }
-                    // Sideways bias remains
-                    const sx = x + Math.sign(dirX);
-                    if (this._inBounds(sx, y) && Math.random() < 0.4) this.grid[this._idx(sx, y)] = 1;
-                    // Try to drop sand into front by pulling from back (respect 50% minimum)
-                    if (!pushingBack) {
-                        if (removeFromBackTop(x)) dropToFrontNear(x, y);
+                if (dx * dx + dy * dy > r * r) continue;
+                // If front has sand here: remove from front, add to back (mass conserved)
+                if (this.grid[this._idx(x, y)]) {
+                    this.grid[this._idx(x, y)] = 0;
+                    this._addToBackTop(x);
+                } else {
+                    // Try to pull one grain from back into front near this spot
+                    supplyFront(x, y);
+                    // Gentle sideways bias only if we have supply
+                    if (Math.random() < 0.3 && supplyFront(x + Math.sign(dirX), y)) {
+                        // placed via supplyFront
                     }
                 }
             }
         }
+    }
+    _dropToFrontNear(x, yPref) {
+        for (let y = Math.min(this.rows - 1, yPref + 2); y >= 0; y--) {
+            if (!this.grid[this._idx(x, y)]) { this.grid[this._idx(x, y)] = 1; return true; }
+        }
+        for (let y = Math.max(0, yPref - 2); y < this.rows; y++) {
+            if (!this.grid[this._idx(x, y)]) { this.grid[this._idx(x, y)] = 1; return true; }
+        }
+        return false;
+    }
+    _backIdx(x, y) { return y * this.cols + x; }
+    _backColFill(x) {
+        let cnt = 0;
+        for (let y = this.backdropRows - 1; y >= 0; y--) {
+            if (this.backdropGrid[this._backIdx(x, y)]) cnt++; else break;
+        }
+        return cnt;
+    }
+    _addToBackTop(x) {
+        const fill = this._backColFill(x);
+        if (fill >= this.backdropRows) return false;
+        const y = this.backdropRows - fill - 1;
+        this.backdropGrid[this._backIdx(x, y)] = 1;
+        return true;
+    }
+    _removeFromBackTop(x, minFill) {
+        const fill = this._backColFill(x);
+        if (fill <= minFill) return false;
+        const y = this.backdropRows - fill;
+        this.backdropGrid[this._backIdx(x, y)] = 0;
+        return true;
     }
     update(_, player) {
         // Player-sand interaction
@@ -168,6 +177,7 @@ export default class SandSim {
             this.impulseAt(px, Math.max(py, bandTopWorld + 2), radius, Math.cos(player.angle), py);
         }
         for (let i = 0; i < this.stepsPerFrame; i++) this._step();
+        for (let i = 0; i < this.backdropStepsPerFrame; i++) this._stepBackdrop();
         this._applyNoSandMask();
     }
     draw(ctx) {
@@ -211,10 +221,16 @@ export default class SandSim {
             const x1 = Math.min(this.cols - 1, Math.floor((n.x + n.width / 2 + marginPx) / this.cell));
             const bodyTopRow = Math.floor((n.y - n.height / 2 - topYWorld) / this.cell);
             const bodyBotRow = Math.floor((n.y + n.height / 2 - topYWorld) / this.cell);
-            const aboveEnd = Math.max(0, bodyTopRow); // clear anything above the crab within the sand band
+            const aboveEnd = Math.max(0, bodyTopRow);
             for (let x = x0; x <= x1; x++) {
-                for (let y = 0; y <= Math.min(this.rows - 1, aboveEnd); y++) this.grid[this._idx(x, y)] = 0;
-                for (let y = Math.max(0, bodyTopRow); y <= Math.min(this.rows - 1, bodyBotRow); y++) this.grid[this._idx(x, y)] = 0;
+                for (let y = 0; y <= Math.min(this.rows - 1, aboveEnd); y++) {
+                    const i = this._idx(x, y);
+                    if (this.grid[i]) { this.grid[i] = 0; this._addToBackTop(x); }
+                }
+                for (let y = Math.max(0, bodyTopRow); y <= Math.min(this.rows - 1, bodyBotRow); y++) {
+                    const i = this._idx(x, y);
+                    if (this.grid[i]) { this.grid[i] = 0; this._addToBackTop(x); }
+                }
             }
         }
     }
