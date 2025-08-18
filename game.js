@@ -39,6 +39,7 @@ class Game {
 
         this.lastTime = 0;
         this.camera = { x: 0, y: 0 };
+        this.debug = { showCoords: false };
     }
 
     async loadAssets() {

@@ -39,6 +39,14 @@ export class UI {
         if(this.activeNPC && this.activeNPC.currentDialogue) {
             this.drawDialogueBox(ctx, this.activeNPC.currentDialogue);
         }
+        // Debug: show player world coordinates
+        if (this.game.debug && this.game.debug.showCoords) {
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'right';
+            const x = Math.round(this.game.player.x), y = Math.round(this.game.player.y);
+            ctx.strokeText(`x: ${x}  y: ${y}`, this.game.width - 10, 10);
+            ctx.fillText(`x: ${x}  y: ${y}`, this.game.width - 10, 10);
+        }
     }
     
     drawDialogueBox(ctx, text) {
@@ -82,4 +90,3 @@ export class UI {
         ctx.fillText(line, boxX + boxWidth / 2, y);
     }
 }
-
