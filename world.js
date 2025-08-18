@@ -140,7 +140,7 @@ class World {
         const parallaxFactorMid = 0.3;
         
         // Draw solid backgrounds
-        this.drawSolidBackground(ctx, bgFar, camera.x * parallaxFactorFar, camera.y * parallaxFactorFar);
+        this.drawBackgroundLayer(ctx, bgFar, camera.x * parallaxFactorFar, camera.y * parallaxFactorFar);
         
         // Draw far background entities
         ctx.save();
@@ -152,7 +152,7 @@ class World {
         ctx.restore();
         
         ctx.globalAlpha = 0.5;
-        this.drawSolidBackground(ctx, bgMid, camera.x * parallaxFactorMid, camera.y * parallaxFactorMid);
+        this.drawBackgroundLayer(ctx, bgMid, camera.x * parallaxFactorMid, camera.y * parallaxFactorMid);
         ctx.globalAlpha = 1;
         
         // Draw mid background entities
@@ -171,7 +171,7 @@ class World {
 
         // Draw near background (foreground)
         ctx.globalAlpha = 0.3;
-        this.drawSolidBackground(ctx, bgNear, camera.x * parallaxFactorNear, camera.y * parallaxFactorNear);
+        this.drawBackgroundLayer(ctx, bgNear, camera.x * parallaxFactorNear, camera.y * parallaxFactorNear);
         ctx.globalAlpha = 1;
 
         // Draw near background entities
@@ -201,28 +201,12 @@ class World {
         this.npcs.forEach(npc => npc.draw(ctx));
     }
 
-    drawSolidBackground(ctx, image, offsetX, offsetY) {
-        if (!image || !image.width || !image.height) return;
-
-        const imgWidth = image.width;
-        const imgHeight = image.height;
-        const screenWidth = this.game.width;
-        const screenHeight = this.game.height;
-
-        // Calculate the starting drawing position of the top-left tile.
-        // We use the modulo operator to find where the pattern should begin
-        // based on the camera's offset, creating the scrolling effect.
-        const startX = -((offsetX % imgWidth + imgWidth) % imgWidth);
-        const startY = -((offsetY % imgHeight + imgHeight) % imgHeight);
-
-        // Loop to draw tiles horizontally and vertically until the entire screen is filled.
-        for (let y = startY; y < screenHeight; y += imgHeight) {
-            for (let x = startX; x < screenWidth; x += imgWidth) {
-                // By flooring the coordinates, we prevent sub-pixel rendering issues
-                // which are a common cause of visible seams between tiles.
-                ctx.drawImage(image, Math.floor(x), Math.floor(y), imgWidth, imgHeight);
-            }
-        }
+    drawBackgroundLayer(ctx, image, offsetX, offsetY) {
+        if (!image) return;
+        
+        // Instead of tiling, draw the image to cover the entire world bounds.
+        // The camera clamping will handle showing black void at edges.
+        ctx.drawImage(image, 0, 0, this.bounds.width, this.bounds.height);
     }
 }
 

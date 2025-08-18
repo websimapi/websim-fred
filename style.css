@@ -2,7 +2,7 @@ body {
     margin: 0;
     padding: 0;
     overflow: hidden;
-    background-color: #001f3f;
+    background-color: #000000;
     font-family: 'Arial', sans-serif;
 }
 
@@ -18,17 +18,6 @@ body {
     height: 100%;
     background-color: #3d98d7;
     cursor: pointer;
-}
-
-#vignette {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    box-shadow: inset 0 0 150px rgba(0,0,0,0.5);
-    pointer-events: none; /* Allows clicks to go through to the canvas */
-    z-index: 50;
 }
 
 #loading-screen {
